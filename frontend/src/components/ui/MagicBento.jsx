@@ -8,20 +8,20 @@ const MOBILE_BREAKPOINT = 768;
 const cardData = [
   {
     color: '#120F17',
-    title: 'Analytics',
-    description: 'Track user behavior',
+    title: 'Facial Analysis',
+    description: 'Analyze facial geometry using advanced computer vision and landmark detection.',
     label: 'Insights'
   },
   {
     color: '#120F17',
-    title: 'Dashboard',
-    description: 'Centralized data view',
+    title: 'Geometry Score',
+    description: 'Generate an objective facial harmony score based on mathematical metrics.',
     label: 'Overview'
   },
   {
     color: '#120F17',
-    title: 'Collaboration',
-    description: 'Work together seamlessly',
+    title: 'Smart Evaluation',
+    description: 'Receive detailed AI-assisted reports explaining each facial metric.',
     label: 'Teamwork'
   },
   {
