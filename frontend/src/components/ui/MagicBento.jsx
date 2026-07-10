@@ -2,45 +2,45 @@ import { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 
 const DEFAULT_SPOTLIGHT_RADIUS = 300;
-const DEFAULT_GLOW_COLOR = '132, 0, 255';
+const DEFAULT_GLOW_COLOR = '132, 0, 255'; 
 const MOBILE_BREAKPOINT = 768;
 
 const cardData = [
   {
-    color: '#120F17',
-    title: 'Facial Analysis',
-    description: 'Analyze facial geometry using advanced computer vision and landmark detection.',
-    label: 'Insights'
+    title: 'Análise Facial',
+    description: 'Capture e analise imagens faciais frontais e de perfil utilizando visão computacional avançada para mapear cada detalhe da sua estrutura com precisão milimétrica.',
+    label: 'Análise',
+    isFeatured: false
   },
   {
-    color: '#120F17',
-    title: 'Geometry Score',
-    description: 'Generate an objective facial harmony score based on mathematical metrics.',
-    label: 'Overview'
+    title: 'Pontuação de Geometria',
+    description: 'Gere um relatório detalhado de harmonia facial baseado em medições geométricas objetivas, proporções áureas clássicas e algoritmos modernos de mapeamento.',
+    label: 'Pontuação',
+    isFeatured: false
   },
   {
-    color: '#120F17',
-    title: 'Smart Evaluation',
-    description: 'Receive detailed AI-assisted reports explaining each facial metric.',
-    label: 'Teamwork'
+    title: 'Avaliação com IA',
+    description: 'Receba um relatório inteligente e automatizado desenvolvido por algoritmos de deep learning. A nossa inteligência artificial analisa os cruzamentos de dados biométricos, cruza informações com padrões de simetria internacionais e explica detalhadamente cada métrica encontrada na sua face, gerando um diagnóstico contextualizado sobre o impacto real de cada proporção no seu resultado final.',
+    label: 'Avaliação IA',
+    isFeatured: true
   },
   {
-    color: '#120F17',
-    title: 'Automation',
-    description: 'Streamline workflows',
-    label: 'Efficiency'
+    title: 'Simetria Facial',
+    description: 'Meça de forma automatizada o nível de correspondência entre o lado esquerdo e direito do rosto. O sistema analisa desvios angulares da linha central da face, avalia microdesalinhamentos nos olhos, sobrancelhas e cantos da boca, fornecendo uma porcentagem precisa de equilíbrio estrutural e destacando quais áreas possuem maior harmonia.',
+    label: 'Simetria',
+    isFeatured: true
   },
   {
-    color: '#120F17',
-    title: 'Integration',
-    description: 'Connect favorite tools',
-    label: 'Connectivity'
+    title: '106 Pontos de Marco',
+    description: 'Detecte instantaneamente mais de cem pontos de referência cruciais na face para calcular ângulos exatos, distâncias nasais, proporção dos olhos e contorno mandibular.',
+    label: 'Detecção',
+    isFeatured: false
   },
   {
-    color: '#120F17',
-    title: 'Security',
-    description: 'Enterprise-grade protection',
-    label: 'Protection'
+    title: 'Privacidade Primeiro',
+    description: 'Os seus dados biométricos e fotos faciais são processados de forma 100% segura, com criptografia de ponta a ponta e total controle sobre a exclusão das suas informações.',
+    label: 'Segurança',
+    isFeatured: false
   }
 ];
 
@@ -344,7 +344,7 @@ const GlobalSpotlight = ({
 
 const BentoCardGrid = ({ children, gridRef }) => (
   <div
-    className="bento-section grid gap-2 p-3  max-w-[72rem] select-none relative"
+    className="bento-section grid gap-2 p-3 max-w-[72rem] select-none relative"
     style={{ fontSize: 'clamp(1rem, 0.9rem + 0.5vw, 1.5rem)' }}
     ref={gridRef}>
     {children}
@@ -367,7 +367,7 @@ const useMobileDetection = () => {
 };
 
 const MagicBento = ({
-  textAutoHide = true,
+  textAutoHide = false, // Alterado o valor padrão para false aqui
   enableSpotlight = true,
   enableBorderGlow = true,
   disableAnimations = false,
@@ -391,13 +391,6 @@ const MagicBento = ({
             --glow-intensity: 0;
             --glow-radius: 200px;
             --glow-color: ${glowColor};
-            --border-color: rgba(211, 171, 57, 0.25);
-            --background-dark: #001115;
-            --white: #fbf5ff;
-            --gold-brand: #d3ab39;
-            --purple-primary: #d339a0;
-            --purple-glow: rgba(211, 57, 160, 0.15);
-            --purple-border: rgba(211, 171, 57, 0.6);
           }
           
           .card-responsive {
@@ -474,8 +467,8 @@ const MagicBento = ({
           .text-clamp-2 {
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
             overflow: hidden;
             text-overflow: ellipsis;
           }
@@ -504,16 +497,15 @@ const MagicBento = ({
           glowColor={glowColor} />
       )}
       <BentoCardGrid gridRef={gridRef}>
-        <div className="card-responsive grid gap-2">
+        {/* Alterado bg-brand-bg-main para bg-background */}
+        <div className="card-responsive grid gap-2 bg-background">
           {cardData.map((card, index) => {
-            const baseClassName = `card flex flex-col justify-between relative aspect-[4/3] min-h-[200px] w-full max-w-full p-5 rounded-[20px] border border-solid font-light overflow-hidden transition-colors duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] ${
+            // Alterado border-brand-border para border-border E bg-brand-bg-surface para bg-surface
+            const baseClassName = `card flex flex-col justify-between relative aspect-[4/3] min-h-[200px] w-full max-w-full p-6 rounded-[20px] border border-solid border-border bg-surface font-light overflow-hidden transition-colors duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] ${
               enableBorderGlow ? 'card--border-glow' : ''
             }`;
 
             const cardStyle = {
-              backgroundColor: card.color || 'var(--background-dark)',
-              borderColor: 'var(--border-color)',
-              color: 'var(--white)',
               '--glow-x': '50%',
               '--glow-y': '50%',
               '--glow-intensity': '0',
@@ -530,16 +522,23 @@ const MagicBento = ({
                 enableTilt={enableTilt}
                 clickEffect={clickEffect}
                 enableMagnetism={enableMagnetism}>
-                <div className="card__header flex justify-between gap-3 relative text-white">
+                {/* Alterado text-brand-text-primary para text-text-primary */}
+                <div className="card__header flex justify-between gap-3 relative text-text-primary">
                   <span className="card__label text-base">{card.label}</span>
                 </div>
-                <div className="card__content flex flex-col relative text-white">
+                {/* Alterado text-brand-text-primary para text-text-primary */}
+                <div className="card__content flex flex-col relative text-text-primary">
                   <h3
-                    className={`card__title font-normal text-base m-0 mb-1 ${textAutoHide ? 'text-clamp-1' : ''}`}>
+                    className={`card__title font-normal m-0 mb-2 ${textAutoHide ? 'text-clamp-1' : ''} ${
+                      card.isFeatured ? 'text-xl font-medium' : 'text-lg'
+                    }`}>
                     {card.title}
                   </h3>
+                  {/* Alterado text-brand-text-secondary para text-text-secondary */}
                   <p
-                    className={`card__description text-xs leading-5 opacity-90 ${textAutoHide ? 'text-clamp-2' : ''}`}>
+                    className={`card__description leading-relaxed text-text-secondary ${textAutoHide ? 'text-clamp-2' : ''} ${
+                      card.isFeatured ? 'text-base' : 'text-sm'
+                    }`}>
                     {card.description}
                   </p>
                 </div>
