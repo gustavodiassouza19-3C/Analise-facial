@@ -3,6 +3,7 @@ import ColorBends from "./components/ui/ColorBends";
 import TextPressure from './components/ui/TextPressure';
 import CardNav from './components/ui/CardNav';
 import MagicBento from './components/ui/MagicBento'; // 1. Importando o novo componente
+import FaceAnalyzer from './components/evaluation/FaceAnalyzer';
 import logo from './assets/logo.png';
 
 export default function App() {
@@ -38,11 +39,11 @@ export default function App() {
 
   return (
     // Alterado overflow-hidden para overflow-x-hidden e h-screen para min-h-screen para permitir rolagem
-    <div className="relative min-h-screen w-screen bg-brand-dark overflow-x-hidden">
-      
-      {/* ================= SECTION 1: HERO ================= */}
+    <div className="relative min-h-screen w-screen bg-background overflow-x-hidden">
+
+      {/* ================= LANDING PAGE (暂时 desativada para dev) ================= */}
+      {/*
       <section className="relative h-screen w-full">
-        {/* 1. Fundo Visual Dinâmico (WebGL/Canvas) */}
         <div className="absolute inset-0 w-full h-full z-0">
           <ColorBends
             rotation={90}
@@ -61,8 +62,6 @@ export default function App() {
             bandWidth={6}
           />
         </div>
-
-        {/* 2. Header Superior (Menu de Navegação CardNav) */}
         <header className="absolute top-0 left-0 w-full z-30 pointer-events-auto">
           <CardNav
             logo={logo}
@@ -74,8 +73,6 @@ export default function App() {
             buttonTextColor="#00090b"
           />
         </header>
-
-        {/* 3. Camada Central: Texto Principal */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-full max-w-4xl px-6 pointer-events-none">
           <div className="pointer-events-auto h-[150px] flex items-center justify-center">
             <TextPressure
@@ -94,11 +91,9 @@ export default function App() {
           </div>
         </div>
       </section>
-
-      {/* ================= SECTION 2: INFORMAÇÕES (BENTO GRID) ================= */}
-      <section className="relative z-20 w-full max-w-7xl mx-auto px-6 py-20 bg-brand-dark">
+      <section className="relative z-20 w-full max-w-7xl mx-auto px-6 py-20 bg-background">
         <div className="w-full flex flex-col items-center justify-center">
-          <MagicBento 
+          <MagicBento
             textAutoHide={true}
             enableStars
             enableSpotlight
@@ -113,6 +108,10 @@ export default function App() {
           />
         </div>
       </section>
+      */}
+
+      {/* ================= MVP: FaceAnalyzer ================= */}
+      <FaceAnalyzer />
 
     </div>
   );

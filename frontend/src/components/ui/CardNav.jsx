@@ -223,7 +223,7 @@ const CardNav = ({
               ref={setCardRef(idx)}
               style={{ backgroundColor: item.bgColor, color: item.textColor }}>
               <div
-  className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px] transition-all duration-300 hover:text-[#D3AB39] cursor-pointer">
+  className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px] transition-all duration-300 hover:text-brand-accent cursor-pointer">
   {item.label}
 </div>
               <div className="nav-card-links mt-auto flex flex-col gap-[2px]">

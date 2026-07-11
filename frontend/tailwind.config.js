@@ -1,27 +1,35 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+    darkMode: ['class'],
+    content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
-    extend: {
-      colors: {
-        // Nomes semânticos universais para o seu ecossistema
-        background: '#001217',     // O fundo principal do app
-        surface: 'rgb(0, 18, 23, 07)',        // O fundo sólido dos cards/painéis
-        border: 'rgba(212, 171, 58)', // A linha sutil dos elementos
-        
-        brand: {
-          primary: '#001115',
-          secondary: '#01191f',
-          accent: '#d3ab39',       // O seu dourado de destaque/ação
-        },
-
-        text: {
-          primary: '#ffffff',      // Títulos e textos principais
-          secondary: '#94a3b8',    // Descrições e subtextos
-          muted: '#64748b',        // Textos desativados ou labels pequenas
-        }
-      },
-    },
+  	extend: {
+  		colors: {
+  			background: '#0a0a0a',
+  			surface: 'rgba(1, 25, 31, 0.8)',
+  			border: 'rgba(211, 171, 57, 0.15)',
+  			brand: {
+  				primary: '#0a0a0a',
+  				secondary: '#01191f',
+  				accent: '#d3ab39'
+  			},
+  			text: {
+  				primary: '#ffffff',
+  				secondary: '#94a3b8',
+  				muted: '#64748b'
+  			},
+  			sidebar: {
+  				DEFAULT: 'hsl(var(--sidebar-background))',
+  				foreground: 'hsl(var(--sidebar-foreground))',
+  				primary: 'hsl(var(--sidebar-primary))',
+  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+  				accent: 'hsl(var(--sidebar-accent))',
+  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+  				border: 'hsl(var(--sidebar-border))',
+  				ring: 'hsl(var(--sidebar-ring))'
+  			}
+  		}
+  	}
   },
   plugins: [],
 }

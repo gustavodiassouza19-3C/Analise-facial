@@ -1,0 +1,9 @@
+{
+  "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
+  "mcp": {
+    "shadcn": {
+      "type": "local",
+      "command": ["npx", "shadcn@latest", "mcp"]
+    }
+  }
+}
