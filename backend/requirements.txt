@@ -1,36 +1,35 @@
-# FastAPI & Server
-fastapi==0.115.*
-uvicorn[standard]==0.32.*
-python-multipart==0.0.*
+# Production dependencies - Análise Facial Backend
+# Generated from venv, filtered for production use
+
+# Core web framework
+fastapi==0.110.3
+uvicorn[standard]==0.32.1
+
+# Database
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.31.0
+alembic==1.18.5
 
 # Validation & Settings
-pydantic==2.10.*
-pydantic-settings==2.7.*
-python-dotenv==1.0.*
+pydantic==2.9.2
+pydantic-settings==2.6.1
+email-validator==2.3.0
 
-# Database (Async)
-sqlalchemy[asyncio]==2.0.*
-asyncpg==0.30.*
-alembic==1.14.*
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+bcrypt>=4.0,<5.0
+cryptography==49.0.0
 
-# Security
-passlib[bcrypt]==1.7.*
-python-jose[cryptography]==3.3.*
-bcrypt==4.2.*
+# File upload
+python-multipart==0.0.18
 
-# Cache
-redis==5.2.*
+# Computer Vision
+opencv-python-headless==4.11.0.86
+mediapipe==0.10.35
+numpy==1.26.4
 
-# Image Processing
-opencv-python==4.10.*
-numpy==2.1.*
-mediapipe==0.10.*
+# HTTP client (for external APIs if needed)
+httpx==0.28.1
 
-# Testing
-pytest==8.*
-pytest-asyncio==0.24.*
-httpx==0.28.*
-
-# Code Quality
-ruff==0.8.*
-mypy==1.13.*
+# Utilities
+python-dotenv==1.0.1

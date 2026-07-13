@@ -1,27 +1,93 @@
-import { useNavigate } from 'react-router-dom';
-import { LoginForm } from '@/components/login-form';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const email = formData.get('email');
-    const password = formData.get('password');
+    setError('');
+    setLoading(true);
 
-    const result = await login(email, password);
-    if (result.success) {
-      navigate('/dashboard');
+    try {
+      const formData = new FormData(e.target);
+      const email = formData.get('email');
+      const password = formData.get('password');
+
+      const result = await login(email, password);
+
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('Ocorreu um erro inesperado. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-4xl">
-        <LoginForm onSubmit={handleLogin} />
+      <div className="w-full max-w-md">
+        <Card className="overflow-hidden bg-card-bg border-border">
+          <CardContent className="p-6 md:p-8">
+            <form className="flex flex-col gap-6" onSubmit={handleLogin}>
+              <div className="flex flex-col items-center text-center">
+                <h1 className="text-2xl font-bold text-text-primary">Bem-vindo de volta</h1>
+                <p className="text-balance text-text-secondary">Acesse sua conta para continuar</p>
+              </div>
+              {error && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                  {error}
+                </div>
+              )}
+              <div className="grid gap-2">
+                <Label htmlFor="email" className="text-text-secondary">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  required
+                  className="bg-background border-border text-text-primary placeholder:text-text-muted"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password" className="text-text-secondary">Senha</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className="bg-background border-border text-text-primary"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-brand-accent text-background font-semibold hover:opacity-90"
+              >
+                {loading ? 'Entrando...' : 'Entrar'}
+              </Button>
+              <div className="text-center text-sm text-text-secondary">
+                Não tem uma conta?{' '}
+                <Link to="/signup" className="underline underline-offset-4 text-brand-accent hover:text-brand-accent/80">
+                  Cadastre-se
+                </Link>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

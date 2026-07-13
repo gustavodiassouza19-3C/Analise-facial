@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Camera,
   CameraOff,
@@ -11,6 +12,7 @@ import {
   GitCompareArrows,
   User,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -20,34 +22,21 @@ import ChartRadialText from './ChartRadialText';
 import FacialThirds from './FacialThirds';
 import RadarAttributes from './RadarAttributes';
 import HighlightBadges from './HighlightBadges';
+import { useAuth } from '@/context/AuthContext';
+import { useFaceMesh } from '@/hooks/useFaceMesh';
+import { sendDataToBackend, detectFace } from '@/lib/api';
 
 /* ============================================================
-   DATA
+   METRICS PANEL
    ============================================================ */
 
-const resultCards = [
-  { title: 'Simetria Lateral', value: '94.2%', detail: 'Acima da média', icon: Triangle },
-  { title: 'Proporção Áurea', value: '1.618', detail: 'Proporção ideal', icon: Ruler },
-  { title: 'Alinhamento dos Olhos', value: '97.8%', detail: 'Excelente alinhamento', icon: Eye },
-];
-
-const photoSlots = [
-  { key: 'front', label: 'Foto Frontal', hint: 'Rosto de frente' },
-  { key: 'right', label: 'Lateral Direita', hint: 'Perfil direito' },
-  { key: 'left', label: 'Lateral Esquerda', hint: 'Perfil esquerdo' },
-];
-
-/* ============================================================
-   METRICS PANEL CONTENT
-   ============================================================ */
-
-function MetricsContent({ analysisData }) {
+function MetricsContent({ geometryData }) {
   return (
     <div className="flex flex-col gap-5">
-      <ChartRadialText score={analysisData?.harmonyScore ?? 0} label={analysisData?.symmetryLabel ?? "Simetria Global"} />
-      <FacialThirds thirds={analysisData?.thirds} />
-      <RadarAttributes data={analysisData?.radarFeatures} />
-      <HighlightBadges highlights={analysisData?.highlights} />
+      <ChartRadialText score={geometryData?.harmonyScore ?? 0} label="Harmonia Facial" />
+      <FacialThirds thirds={geometryData?.thirds} />
+      <RadarAttributes data={geometryData?.radarFeatures} />
+      <HighlightBadges highlights={geometryData?.highlights} />
     </div>
   );
 }
@@ -57,18 +46,28 @@ function MetricsContent({ analysisData }) {
    ============================================================ */
 
 export default function FaceAnalyzer() {
+  const { token, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('analise');
   const [isAnalyzed, setIsAnalyzed] = useState(false);
-  const [analysisData, setAnalysisData] = useState(null);
+  const [geometryData, setGeometryData] = useState(null);
   const [photos, setPhotos] = useState({ front: null, right: null, left: null });
   const [activeSlot, setActiveSlot] = useState('front');
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [metricsOpen, setMetricsOpen] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState(null);
+  const [detectingFace, setDetectingFace] = useState(null); // slot being processed or null
+  const [detectError, setDetectError] = useState(null);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
+  const overlayCanvasRef = useRef(null);
+  const fileInputRefs = useRef({});
+
+  const { faceDetected, points, boundingBox, distanceStatus, isTrackingVisible, getPoints, setOnAutoCapture, resetTracking } = useFaceMesh(videoRef, overlayCanvasRef);
 
   const startCamera = useCallback(async () => {
     setCameraError(null);
@@ -95,6 +94,31 @@ export default function FaceAnalyzer() {
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
+  // Reset tracking when active slot changes
+  useEffect(() => {
+    resetTracking();
+  }, [activeSlot, resetTracking]);
+
+  const processImage = useCallback(async (base64Image, slot) => {
+    setDetectingFace(slot);
+    setDetectError(null);
+    try {
+      const cropped = await detectFace(base64Image);
+      setPhotos((prev) => {
+        if (prev[slot]) URL.revokeObjectURL(prev[slot]);
+        return { ...prev, [slot]: cropped };
+      });
+    } catch (err) {
+      setDetectError(err.message || 'Erro ao detectar rosto');
+      setPhotos((prev) => {
+        if (prev[slot]) URL.revokeObjectURL(prev[slot]);
+        return { ...prev, [slot]: base64Image };
+      });
+    } finally {
+      setDetectingFace(null);
+    }
+  }, []);
+
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
@@ -106,21 +130,21 @@ export default function FaceAnalyzer() {
     ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    const url = canvas.toDataURL('image/jpeg', 0.9);
-    setPhotos((prev) => {
-      if (prev[activeSlot]) URL.revokeObjectURL(prev[activeSlot]);
-      return { ...prev, [activeSlot]: url };
-    });
-  }, [activeSlot]);
+    const base64 = canvas.toDataURL('image/jpeg', 0.9);
+    processImage(base64, activeSlot);
+  }, [activeSlot, processImage]);
+
+  // Register auto-capture callback for face tracking (must be after capturePhoto)
+  useEffect(() => {
+    setOnAutoCapture(() => capturePhoto);
+  }, [capturePhoto, setOnAutoCapture]);
 
   const handlePhotoUpload = useCallback((key, file) => {
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPhotos((prev) => {
-      if (prev[key]) URL.revokeObjectURL(prev[key]);
-      return { ...prev, [key]: url };
-    });
-  }, []);
+    const reader = new FileReader();
+    reader.onload = () => processImage(reader.result, key);
+    reader.readAsDataURL(file);
+  }, [processImage]);
 
   const handleRemovePhoto = useCallback((key) => {
     setPhotos((prev) => {
@@ -129,43 +153,81 @@ export default function FaceAnalyzer() {
     });
   }, []);
 
-  const canAnalyze = photos.front && photos.right && photos.left;
+  /* ────────────────────────────────────────────────────────
+     ANALISAR — envia pontos para /analysis/calculate-metrics
+     ──────────────────────────────────────────────────────── */
+  const handleAnalyze = async () => {
+    if (analyzing) return;
+    setAnalyzing(true);
+    setAnalyzeError(null);
 
-  const handleAnalyze = () => {
-    if (!canAnalyze) return;
-    // TODO: substituir por chamada real à API
-    setAnalysisData({
-      harmonyScore: 85,
-      symmetryLabel: "Simetria Global",
-      thirds: [
-        { label: "Terço Superior (Testa)", value: 33.1 },
-        { label: "Terço Médio (Nariz)", value: 34.2 },
-        { label: "Terço Inferior (Mandíbula)", value: 32.7 },
-      ],
-      radarFeatures: [
-        { feature: "Simetria", score: 94 },
-        { feature: "Proporção Áurea", score: 85 },
-        { feature: "Alinhamento Ocular", score: 97 },
-        { feature: "Maxilar", score: 89 },
-        { feature: "Região Nasal", score: 92 },
-      ],
-      highlights: [
-        "Simetria Ocular Excelente",
-        "Estrutura Óssea Firme",
-        "Proporção Áurea Ideal",
-        "Alinhamento Nasal Preciso",
-      ],
-    });
-    setIsAnalyzed(true);
+    try {
+      const currentPoints = getPoints();
+
+      if (!currentPoints) {
+        throw new Error(
+          'Nenhum rosto detectado. Posicione o rosto na câmera e aguarde a detecção dos pontos.'
+        );
+      }
+
+      const data = await sendDataToBackend(currentPoints);
+
+      const thirdsMapped = [
+        { label: data.thirds.superior.label, value: data.thirds.superior.percentage },
+        { label: data.thirds.middle.label,   value: data.thirds.middle.percentage },
+        { label: data.thirds.inferior.label, value: data.thirds.inferior.percentage },
+      ];
+
+      const radarFeatures = [
+        { feature: 'Terço Superior',  score: Math.round(100 - data.thirds.superior.deviation * 3) },
+        { feature: 'Terço Médio',    score: Math.round(100 - data.thirds.middle.deviation * 3) },
+        { feature: 'Terço Inferior', score: Math.round(100 - data.thirds.inferior.deviation * 3) },
+        { feature: 'Ângulo Nasal',   score: Math.round(Math.min(100, data.nasolabial_angle / 1.2)) },
+        { feature: 'Ricketts',       score: Math.round(Math.min(100, 80 + data.ricketts.upper_lip_distance * 5)) },
+      ];
+
+      const avgScore = radarFeatures.reduce((s, r) => s + r.score, 0) / radarFeatures.length;
+
+      const highlights = [];
+      if (data.thirds.superior.deviation < 3) highlights.push('Terço Superior Equilibrado');
+      if (data.thirds.middle.deviation < 3)   highlights.push('Terço Médio Proporcional');
+      if (data.thirds.inferior.deviation < 3) highlights.push('Terço Inferior Harmônico');
+      if (data.nasolabial_angle >= 90 && data.nasolabial_angle <= 110) highlights.push('Ângulo Nasolabial Ideal');
+      if (data.ricketts.upper_lip_distance > 0) highlights.push('Lábio Superior em Posição Ideal');
+
+      setGeometryData({
+        harmonyScore: Math.round(avgScore),
+        thirds: thirdsMapped,
+        radarFeatures,
+        highlights,
+        raw: data,
+      });
+
+      setIsAnalyzed(true);
+    } catch (err) {
+      setAnalyzeError(err.message || 'Erro ao calcular métricas');
+    } finally {
+      setAnalyzing(false);
+    }
   };
+
+  const photoSlots = [
+    { key: 'front', label: 'Frontal', hint: 'Rosto de frente' },
+    { key: 'right', label: 'Lateral Direita', hint: 'Perfil direito' },
+    { key: 'left', label: 'Lateral Esquerda', hint: 'Perfil esquerdo' },
+  ];
 
   const handleNewScan = () => {
     Object.values(photos).forEach((url) => {
       if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
     });
     setPhotos({ front: null, right: null, left: null });
-    setAnalysisData(null);
+    setGeometryData(null);
     setIsAnalyzed(false);
+    setAnalyzeError(null);
+    setDetectError(null);
+    resetTracking();
+    setActiveSlot('front');
     setActiveTab('analise');
   };
 
@@ -190,6 +252,11 @@ export default function FaceAnalyzer() {
                       style={{ transform: 'scaleX(-1)' }}
                       className={`w-full h-full object-cover ${cameraActive ? 'block' : 'hidden'}`}
                     />
+                    <canvas
+                      ref={overlayCanvasRef}
+                      className={`absolute inset-0 w-full h-full ${cameraActive && isTrackingVisible ? 'block' : 'hidden'}`}
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
                     <canvas ref={canvasRef} className="hidden" />
                     {!cameraActive && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
@@ -197,18 +264,18 @@ export default function FaceAnalyzer() {
                           <Camera className="w-8 h-8 text-text-secondary" />
                         </div>
                         <p className="text-text-secondary text-sm text-center px-6">
-                          {cameraError || 'Ative a câmera para iniciar a captura facial'}
+                          {cameraError || 'Ative a câmera para iniciar a detecção facial'}
                         </p>
                       </div>
                     )}
-                    {cameraActive && (
+                    {cameraActive && isTrackingVisible && (
                       <div className="absolute inset-0 pointer-events-none">
                         <div className="absolute top-5 left-5 w-10 h-10 border-t-[1.5px] border-l-[1.5px] border-brand-accent/80 rounded-tl-md" />
                         <div className="absolute top-5 right-5 w-10 h-10 border-t-[1.5px] border-r-[1.5px] border-brand-accent/80 rounded-tr-md" />
                         <div className="absolute bottom-5 left-5 w-10 h-10 border-b-[1.5px] border-l-[1.5px] border-brand-accent/80 rounded-bl-md" />
                         <div className="absolute bottom-5 right-5 w-10 h-10 border-b-[1.5px] border-r-[1.5px] border-brand-accent/80 rounded-br-md" />
                         <span className="absolute bottom-5 left-1/2 -translate-x-1/2 text-[11px] font-medium text-brand-accent/70 bg-background/60 backdrop-blur-sm px-3 py-1 rounded-full border border-brand-accent/10">
-                          Posicione o rosto na moldura
+                          {faceDetected ? '✓ Rosto detectado — pontos capturados' : 'Posicione o rosto na moldura'}
                         </span>
                       </div>
                     )}
@@ -242,13 +309,38 @@ export default function FaceAnalyzer() {
                         </button>
                       </>
                     )}
-                    <label className="flex items-center gap-2 px-5 py-3 rounded-xl border border-border text-text-secondary font-medium text-sm hover:text-text-primary hover:bg-white/5 transition-colors cursor-pointer">
+                    <label
+                      onClick={() => fileInputRefs.current[activeSlot]?.click()}
+                      className="flex items-center gap-2 px-5 py-3 rounded-xl border border-border text-text-secondary font-medium text-sm hover:text-text-primary hover:bg-white/5 transition-colors cursor-pointer"
+                    >
                       <Upload className="w-4 h-4" />
                       Upload
-                      <input type="file" accept="image/*" className="hidden" />
                     </label>
 
-                    {/* Botão Métricas — sempre visível */}
+                    {/* ══════ BOTÃO ANALISAR ══════ */}
+                    <button
+                      onClick={handleAnalyze}
+                      disabled={!faceDetected || analyzing}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                        faceDetected && !analyzing
+                          ? 'bg-brand-accent text-background hover:opacity-90'
+                          : 'bg-white/5 text-text-muted border border-border cursor-not-allowed'
+                      }`}
+                    >
+                      {analyzing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Calculando...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Analisar
+                        </>
+                      )}
+                    </button>
+
+                    {/* Botão Métricas */}
                     <Sheet open={metricsOpen} onOpenChange={setMetricsOpen}>
                       <SheetTrigger asChild>
                         <button className="flex items-center gap-2 px-5 py-3 rounded-xl border border-border text-text-secondary font-medium text-sm hover:text-text-primary hover:bg-white/5 transition-colors">
@@ -261,13 +353,45 @@ export default function FaceAnalyzer() {
                           <SheetTitle className="text-text-primary">Métricas da Análise</SheetTitle>
                         </SheetHeader>
                         <div className="mt-6">
-                          <MetricsContent analysisData={analysisData} />
+                          <MetricsContent geometryData={geometryData} />
                         </div>
                       </SheetContent>
                     </Sheet>
                   </div>
 
-                  {/* 3 cards de foto — responsivo */}
+                  {/* Erro da análise */}
+                  {analyzeError && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      {analyzeError}
+                    </div>
+                  )}
+
+                  {/* Erro da detecção facial */}
+                  {detectError && (
+                    <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm">
+                      {detectError}
+                    </div>
+                  )}
+
+                  {/* Status dos pontos */}
+                  {cameraActive && (
+                    <div className="flex items-center gap-2 text-xs text-text-muted">
+                      <div className={`w-2 h-2 rounded-full ${
+                        distanceStatus === 'ideal' ? 'bg-green-500' :
+                        distanceStatus === 'too-far' ? 'bg-red-500 animate-pulse' :
+                        distanceStatus === 'too-close' ? 'bg-yellow-500 animate-pulse' :
+                        'bg-yellow-500 animate-pulse'
+                      }`} />
+                      {faceDetected
+                        ? distanceStatus === 'ideal' ? 'Distancia ideal - captura automatica em breve' :
+                          distanceStatus === 'too-far' ? 'Aproxime-se da camera' :
+                          distanceStatus === 'too-close' ? 'Afaste-se da camera' :
+                          `${Object.keys(points || {}).length}/9 pontos detectados`
+                        : 'Aguardando detecção facial...'}
+                    </div>
+                  )}
+
+                  {/* 3 cards de foto */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {photoSlots.map(({ key, label, hint }) => (
                       <div
@@ -283,25 +407,24 @@ export default function FaceAnalyzer() {
                           type="file"
                           accept="image/*"
                           className="hidden"
+                          ref={(el) => { fileInputRefs.current[key] = el; }}
                           onChange={(e) => handlePhotoUpload(key, e.target.files?.[0])}
                         />
-
-                        {photos[key] ? (
+                        {detectingFace === key ? (
+                          <div className="flex flex-col items-center justify-center gap-3 py-10 px-4 aspect-[3/4]">
+                            <Loader2 className="w-8 h-8 text-brand-accent animate-spin" />
+                            <p className="text-xs text-text-muted">Detectando rosto...</p>
+                          </div>
+                        ) : photos[key] ? (
                           <>
-                            <img
-                              src={photos[key]}
-                              alt={label}
-                              className="w-full aspect-[3/4] object-cover"
-                            />
+                            <img src={photos[key]} alt={label} className="w-full aspect-[3/4] object-cover" />
                             <button
                               onClick={(e) => { e.stopPropagation(); handleRemovePhoto(key); }}
                               className="absolute top-2 right-2 w-6 h-6 rounded-full bg-background/80 border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-background transition-colors text-xs"
-                            >
-                              ×
-                            </button>
+                            >×</button>
                           </>
                         ) : (
-                          <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
+                          <div className="flex flex-col items-center justify-center gap-3 aspect-[3/4] px-4">
                             <div className="w-14 h-14 rounded-full border border-border flex items-center justify-center bg-white/[0.02]">
                               <User className="w-6 h-6 text-text-muted" />
                             </div>
@@ -311,7 +434,6 @@ export default function FaceAnalyzer() {
                             </div>
                           </div>
                         )}
-
                         <div className="px-3 py-2 border-t border-border">
                           <p className="text-[11px] font-medium text-text-secondary text-center">{label}</p>
                         </div>
@@ -323,19 +445,20 @@ export default function FaceAnalyzer() {
                 {/* Coluna dos cards — oculta no mobile */}
                 <div className="hidden md:flex flex-col gap-4 w-72">
                   <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Estatísticas</h2>
-                  <ChartRadialText score={analysisData?.harmonyScore ?? 0} label={analysisData?.symmetryLabel ?? "Simetria Global"} />
-                  <FacialThirds thirds={analysisData?.thirds} />
-                  <RadarAttributes data={analysisData?.radarFeatures} />
-                  <HighlightBadges highlights={analysisData?.highlights} />
+                  <ChartRadialText score={geometryData?.harmonyScore ?? 0} label="Harmonia Facial" />
+                  <FacialThirds thirds={geometryData?.thirds} />
+                  <RadarAttributes data={geometryData?.radarFeatures} />
+                  <HighlightBadges highlights={geometryData?.highlights} />
                 </div>
               </>
             ) : (
+              /* ══════ RESULTADO ══════ */
               <div className="flex flex-col gap-8 w-full max-w-4xl">
                 <div className="flex items-center justify-between">
                   <div>
                     <h1 className="text-2xl font-bold tracking-tight text-text-primary">Resultado da Análise</h1>
                     <p className="text-sm text-text-secondary mt-1">
-                      Avaliação geométrica completa — {new Date().toLocaleDateString('pt-BR')}
+                      Métricas geométricas — {new Date().toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                   <button
@@ -347,32 +470,37 @@ export default function FaceAnalyzer() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {resultCards.map((card) => {
-                    const Icon = card.icon;
-                    return (
-                      <div
-                        key={card.title}
-                        className="rounded-2xl border border-border bg-card-bg p-6 flex flex-col gap-3 backdrop-blur-md transition-all duration-300 hover:border-brand-accent/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.08)]"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Icon className="w-4 h-4 text-text-muted" />
-                          <span className="text-[11px] uppercase tracking-widest font-semibold text-text-secondary">
-                            {card.title}
-                          </span>
-                        </div>
-                        <span className="text-4xl font-bold text-brand-accent tracking-tight">{card.value}</span>
-                        <span className="text-sm text-text-secondary">{card.detail}</span>
-                      </div>
-                    );
-                  })}
+                <div className="flex flex-col items-center gap-4">
+                  <ChartRadialText score={geometryData?.harmonyScore ?? 0} label="Pontuação Geral" />
                 </div>
 
-                <div className="border border-dashed border-border/50 rounded-2xl h-40 flex items-center justify-center">
-                  <span className="font-mono text-text-muted tracking-wider text-xs uppercase">
-                    EM BREVE — Relatório Detalhado
-                  </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <RadarAttributes data={geometryData?.radarFeatures} />
+                  <FacialThirds thirds={geometryData?.thirds} />
                 </div>
+
+                <HighlightBadges highlights={geometryData?.highlights} />
+
+                {/* Dados brutos */}
+                {geometryData?.raw && (
+                  <div className="rounded-2xl border border-border bg-card-bg p-6">
+                    <h3 className="text-sm font-semibold text-text-secondary mb-3">Dados Geométricos Brutos</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-text-muted font-mono">
+                      <div>
+                        <p className="text-text-secondary mb-1">Ângulo Nasolabial</p>
+                        <p className="text-lg font-bold text-brand-accent">{geometryData.raw.nasolabial_angle}°</p>
+                      </div>
+                      <div>
+                        <p className="text-text-secondary mb-1">Lábio Superior (Ricketts)</p>
+                        <p className="text-lg font-bold text-brand-accent">{geometryData.raw.ricketts.upper_lip_distance}</p>
+                      </div>
+                      <div>
+                        <p className="text-text-secondary mb-1">Lábio Inferior (Ricketts)</p>
+                        <p className="text-lg font-bold text-brand-accent">{geometryData.raw.ricketts.lower_lip_distance}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

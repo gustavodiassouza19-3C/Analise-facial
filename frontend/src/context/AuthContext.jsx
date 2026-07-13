@@ -2,55 +2,76 @@ import { createContext, useContext, useState, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
-/*
- * SEGURANÇA: Quando integrarmos com o backend Python, todas as requisições
- * de fetch/axios para login/logout DEVERÃO incluir { credentials: 'include' }
- * para permitir que o navegador receba e armazene o HttpOnly Cookie
- * automaticamente. Exemplo:
- *
- *   fetch('/api/login', {
- *     method: 'POST',
- *     headers: { 'Content-Type': 'application/json' },
- *     credentials: 'include',  // <-- OBRIGATÓRIO para HttpOnly Cookies
- *     body: JSON.stringify({ email, password }),
- *   });
- *
- * Isso garante que o cookie seja enviado/recebido de forma blindada,
- * sem acesso via JavaScript (XSS-safe).
- */
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const login = useCallback(async (email, password) => {
-    // TODO: substituir por chamada real ao backend
-    // const response = await fetch('/api/login', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   credentials: 'include',
-    //   body: JSON.stringify({ email, password }),
-    // });
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    // Mock: simula login bem-sucedido
-    setIsAuthenticated(true);
-    setUser({ email, name: 'Usuário' });
-    return { success: true };
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        return { success: false, error: error.detail || 'Erro ao fazer login' };
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('user', JSON.stringify({ email }));
+      setToken(data.access_token);
+      setUser({ email });
+      setIsAuthenticated(true);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'Não foi possível conectar ao servidor. Tente novamente.' };
+    }
   }, []);
 
-  const logout = useCallback(async () => {
-    // TODO: substituir por chamada real ao backend
-    // await fetch('/api/logout', {
-    //   method: 'POST',
-    //   credentials: 'include',
-    // });
+  const register = useCallback(async (email, password) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    setIsAuthenticated(false);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        return { success: false, error: error.detail || 'Erro ao criar conta' };
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('user', JSON.stringify({ email }));
+      setToken(data.access_token);
+      setUser({ email });
+      setIsAuthenticated(true);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'Não foi possível conectar ao servidor. Tente novamente.' };
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
     setUser(null);
+    setIsAuthenticated(false);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

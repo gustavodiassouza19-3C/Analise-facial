@@ -1,11 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import bcrypt
 from app.models.user import User
 from app.schemas.auth import UserCreate
-from passlib.context import CryptContext
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserRepository:
@@ -23,7 +20,9 @@ class UserRepository:
     async def create(self, user_data: UserCreate) -> User:
         user = User(
             email=user_data.email,
-            hashed_password=pwd_context.hash(user_data.password),
+            hashed_password=bcrypt.hashpw(
+                user_data.password.encode(), bcrypt.gensalt()
+            ).decode(),
             full_name=user_data.full_name,
         )
         self.db.add(user)
@@ -32,4 +31,6 @@ class UserRepository:
         return user
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        return pwd_context.verify(plain_password, hashed_password)
+        return bcrypt.checkpw(
+            plain_password.encode(), hashed_password.encode()
+        )
