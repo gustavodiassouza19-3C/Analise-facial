@@ -1,21 +1,35 @@
+import os
 import base64
 import cv2
 import numpy as np
 import mediapipe as mp
 
+MODEL_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+    "models",
+    "face_landmarker.task",
+)
+
+_base_options = mp.tasks.BaseOptions(model_asset_path=MODEL_PATH)
+_face_landmarker_options = mp.tasks.vision.FaceLandmarkerOptions(
+    base_options=_base_options,
+    running_mode=mp.tasks.vision.RunningMode.IMAGE,
+    num_faces=1,
+    min_face_detection_confidence=0.5,
+    min_tracking_confidence=0.5,
+)
+_face_landmarker = mp.tasks.vision.FaceLandmarker.create_from_options(_face_landmarker_options)
+
 
 class FaceDetectionService:
     """
-    Detects faces in images using MediaPipe FaceMesh and crops around
+    Detects faces in images using MediaPipe FaceLandmarker and crops around
     them with uniform padding to a 3:4 aspect ratio.
     """
 
     OUTPUT_WIDTH = 400
     OUTPUT_HEIGHT = 540  # 3:4 aspect ratio
     PADDING_RATIO = 0.3  # 30% padding around face
-
-    def __init__(self):
-        self.mp_face_mesh = mp.solutions.face_mesh
 
     def _compute_bbox(self, landmarks, img_w: int, img_h: int):
         """Compute bounding box from MediaPipe face landmarks."""
@@ -36,7 +50,7 @@ class FaceDetectionService:
 
     def detect_and_crop(self, base64_image: str) -> str:
         """
-        Receives a base64 image, detects the face using MediaPipe FaceMesh,
+        Receives a base64 image, detects the face using MediaPipe FaceLandmarker,
         crops around it with uniform padding, and returns the cropped base64 image.
 
         Args:
@@ -58,19 +72,15 @@ class FaceDetectionService:
 
         img_h, img_w = image.shape[:2]
 
-        # Detect face with MediaPipe FaceMesh
+        # Detect face with MediaPipe FaceLandmarker
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        with self.mp_face_mesh.FaceMesh(
-            static_image_mode=True,
-            max_num_faces=1,
-            min_detection_confidence=0.5,
-        ) as face_mesh:
-            results = face_mesh.process(rgb)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+        result = _face_landmarker.detect(mp_image)
 
-        if not results.multi_face_landmarks:
+        if not result.face_landmarks:
             raise ValueError("Nenhum rosto detectado na imagem")
 
-        landmarks = results.multi_face_landmarks[0].landmark
+        landmarks = result.face_landmarks[0]
 
         # Get bounding box from landmarks
         fx, fy, fw, fh = self._compute_bbox(landmarks, img_w, img_h)

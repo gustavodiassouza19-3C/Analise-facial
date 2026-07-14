@@ -6,12 +6,13 @@ export default {
   	extend: {
   		colors: {
   			background: '#0a0a0a',
+  			'card-bg': '#141414',
   			'chart-track': '#1a1a1a',
   			surface: 'rgba(1, 25, 31, 0.8)',
   			border: 'rgba(211, 171, 57, 0.15)',
   			brand: {
   				primary: '#0a0a0a',
-  				secondary: '#01191f',
+  				secondary: '#303030',
   				accent: '#d3ab39'
   			},
   			text: {

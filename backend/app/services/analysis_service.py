@@ -1,5 +1,5 @@
 import json
-from openai import AsyncOpenAI
+import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.analysis_repository import AnalysisRepository
@@ -10,18 +10,18 @@ from app.core.config import settings
 SYSTEM_PROMPT = """\
 Você é um especialista mundial em Visagismo e Estética Facial, com mais de 30 anos de experiência em análise morfológica, proporcionalidade facial e harmonia estética.
 
-Analise CONJUNTAMENTE as 3 fotografias fornecidas (foto frontal, perfil esquerdo e perfil direito) e produza uma avaliação qualitativa e quantitativa completa da anatomia facial do utilizador.
+Analise a fotografia facial frontal fornecida e produza uma avaliação qualitativa e quantitativa completa da anatomia facial do utilizador.
 
 ## Regras de Análise
-1. Avalie a simetria facial comparando os lados esquerdo e direito na foto frontal.
+1. Avalie a simetria facial comparando os lados esquerdo e direito.
 2. Analise os terços faciais (superior, médio, inferior) e o equilíbrio entre eles.
-3. Avalie o contorno mandibular e a definição do profile nas fotos laterais.
+3. Avalie o contorno mandibular e a definição do perfil.
 4. Identifique pontos fortes e áreas de melhoria de forma construtiva.
 5. As pontuações devem ser realistas e justas — não inflacione nem deprecie artificialmente.
 
 ## Validação
-Se as imagens não contiverem rostos humanos (por exemplo: imagens de animais, objetos, paisagens, ou imagens corrompidas), retorne EXATAMENTE:
-{"error": true, "message": "Rosto humano não detectado nas imagens fornecidas"}
+Se a imagem não contiver um rosto humano (por exemplo: imagens de animais, objetos, paisagens, ou imagens corrompidas), retorne EXATAMENTE:
+{"error": true, "message": "Rosto humano não detectado na imagem fornecida"}
 
 ## Formato de Saída
 Retorne APENAS um JSON válido, sem nenhum texto adicional antes ou depois. O JSON deve seguir EXATAMENTE esta estrutura:
@@ -65,46 +65,57 @@ class AnalysisService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.analysis_repo = AnalysisRepository(db)
-        self.client = AsyncOpenAI(
-            api_key=settings.DEEPSEEK_API_KEY,
-            base_url=settings.DEEPSEEK_BASE_URL,
+        self._http = httpx.AsyncClient(
+            base_url=settings.OPENROUTER_BASE_URL,
+            headers={
+                "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+                "HTTP-Referer": "http://localhost:5173",
+                "X-Title": "Analise Facial",
+            },
+            timeout=60.0,
         )
 
-    async def _call_deepseek(self, image_b64_list: list[str]) -> dict:
-        """Send images to DeepSeek and return structured JSON analysis."""
-        content = [
-            {
-                "type": "text",
-                "text": (
-                    "Analise estas 3 fotografias faciais (frontal, perfil esquerdo, perfil direito) "
-                    "e retorne a avaliação estruturada em JSON conforme as instruções do sistema."
-                ),
-            }
-        ]
+    async def _call_ai(self, image_b64: str) -> dict:
+        """Send image to OpenRouter and return structured JSON analysis."""
+        # Normalize to raw base64 (strip data URI prefix if present)
+        if image_b64.startswith("data:"):
+            image_b64 = image_b64.split(",", 1)[1]
 
-        labels = ["Foto Frontal", "Perfil Esquerdo", "Perfil Direito"]
-        for b64, label in zip(image_b64_list, labels):
-            content.append({
-                "type": "text",
-                "text": f"[{label}]",
-            })
-            content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": b64 if b64.startswith("data:") else f"data:image/jpeg;base64,{b64}",
+        data_url = f"data:image/jpeg;base64,{image_b64}"
+
+        payload = {
+            "model": settings.OPENROUTER_MODEL,
+            "temperature": 0.4,
+            "max_tokens": 2048,
+            "response_format": {"type": "json_object"},
+            "messages": [
+                {
+                    "role": "system",
+                    "content": SYSTEM_PROMPT,
                 },
-            })
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Analise esta fotografia facial frontal e retorne a avaliação estruturada em JSON conforme as instruções do sistema.",
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": data_url},
+                        },
+                    ],
+                },
+            ],
+        }
 
         try:
-            response = await self.client.chat.completions.create(
-                model=settings.DEEPSEEK_MODEL,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": content},
-                ],
-                response_format={"type": "json_object"},
-                max_tokens=2048,
-                temperature=0.4,
+            resp = await self._http.post("/chat/completions", json=payload)
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Erro na API OpenRouter ({exc.response.status_code}): {exc.response.text[:300]}",
             )
         except Exception as exc:
             raise HTTPException(
@@ -112,7 +123,8 @@ class AnalysisService:
                 detail=f"Erro ao comunicar com a API de análise: {exc}",
             )
 
-        raw = response.choices[0].message.content
+        body = resp.json()
+        raw = body.get("choices", [{}])[0].get("message", {}).get("content", "")
         if not raw:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -124,31 +136,29 @@ class AnalysisService:
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="A API de análise retornou um JSON inválido.",
+                detail=f"A API de análise retornou um JSON inválido: {raw[:200]}",
             )
 
         # Check for face detection failure
         if isinstance(result, dict) and result.get("error"):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=result.get("message", "Rosto humano não detectado nas imagens fornecidas"),
+                detail=result.get("message", "Rosto humano não detectado na imagem fornecida"),
             )
 
         return result
 
     def _map_to_response(self, ai_result: dict) -> dict:
-        """Map DeepSeek JSON output to the format the frontend expects."""
+        """Map AI JSON output to the format the frontend expects."""
         overall = int(ai_result.get("overall_score", 50))
         symmetry = int(ai_result.get("symmetry_score", 50))
 
-        # Categories
         cats = ai_result.get("categories", {})
         terco_sup = cats.get("terco_superior", {}).get("score", 50)
         terco_med = cats.get("terco_medio", {}).get("score", 50)
         terco_inf = cats.get("terco_inferior", {}).get("score", 50)
         mandibular = cats.get("contorno_mandibular", {}).get("score", 50)
 
-        # Thirds data for the bar chart
         thirds_pcts = ai_result.get("thirds_data", [33.3, 33.3, 33.4])
         thirds_data = [
             {"label": "Terço Superior (Testa)", "value": round(thirds_pcts[0], 1)},
@@ -156,7 +166,6 @@ class AnalysisService:
             {"label": "Terço Inferior (Mandíbula)", "value": round(thirds_pcts[2], 1)},
         ]
 
-        # Radar data for the radar chart
         radar_data = [
             {"feature": "Simetria", "score": symmetry},
             {"feature": "Terço Superior", "score": terco_sup},
@@ -165,12 +174,10 @@ class AnalysisService:
             {"feature": "Contorno Mandibular", "score": mandibular},
         ]
 
-        # Highlights
         highlights = ai_result.get("highlights", [])
         if not highlights:
             highlights = ["Análise facial completa"]
 
-        # Categories list for the UI
         categories = [
             {"name": "Simetria Lateral", "score": symmetry, "badge": _badge(symmetry)},
             {"name": "Terço Superior", "score": terco_sup, "badge": _badge(terco_sup)},
@@ -192,16 +199,9 @@ class AnalysisService:
         }
 
     async def analyze(self, data: AnalysisCreate, user_id: str) -> AnalysisResponse:
-        # Normalize base64 strings (ensure they have the data URI prefix)
-        photos = [data.photo_front, data.photo_right, data.photo_left]
-
-        # Call DeepSeek API with all 3 images
-        ai_result = await self._call_deepseek(photos)
-
-        # Map to our response format
+        ai_result = await self._call_ai(data.photo_front)
         result = self._map_to_response(ai_result)
 
-        # Save to database
         db_analysis = await self.analysis_repo.create({
             "user_id": user_id,
             **result,

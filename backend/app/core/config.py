@@ -37,10 +37,10 @@ class Settings(BaseSettings):
     MIN_DETECTION_CONFIDENCE: float = 0.5
     MIN_TRACKING_CONFIDENCE: float = 0.5
 
-    # DeepSeek API
-    DEEPSEEK_API_KEY: str = ""
-    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
-    DEEPSEEK_MODEL: str = "deepseek-chat"
+    # OpenRouter API (replaces direct Gemini)
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "google/gemma-4-26b-a4b-it:free"
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
 
 
 settings = Settings()

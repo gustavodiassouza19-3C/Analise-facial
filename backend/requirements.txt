@@ -27,11 +27,8 @@ opencv-python-headless>=4.11.0
 mediapipe>=0.10.35
 numpy>=1.26.4
 
-# HTTP client
+# HTTP client / AI (OpenRouter)
 httpx>=0.28.0
-
-# AI / DeepSeek
-openai>=1.0.0
 
 # Utilities
 python-dotenv>=1.0.1

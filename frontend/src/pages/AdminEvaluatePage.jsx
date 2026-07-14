@@ -1,0 +1,330 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Save, CheckCircle2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import DashboardLayout from '@/components/DashboardLayout';
+
+const CATEGORY_OPTIONS = ['Excelente', 'Bom', 'Regular', 'Ajustável'];
+
+export default function AdminEvaluatePage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [entry, setEntry] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  // Form state
+  const [overallScore, setOverallScore] = useState(50);
+  const [symmetryScore, setSymmetryScore] = useState(50);
+  const [tercoSuperior, setTercoSuperior] = useState(33);
+  const [tercoMedio, setTercoMedio] = useState(34);
+  const [tercoInferior, setTercoInferior] = useState(33);
+  const [catSuperior, setCatSuperior] = useState('Bom');
+  const [catMedio, setCatMedio] = useState('Bom');
+  const [catInferior, setCatInferior] = useState('Bom');
+  const [catMandibular, setCatMandibular] = useState('Bom');
+  const [highlightsInput, setHighlightsInput] = useState('');
+  const [cabelo, setCabelo] = useState('');
+  const [barba, setBarba] = useState('');
+  const [oculos, setOculos] = useState('');
+  const [tercoError, setTercoError] = useState(false);
+
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem('pending_evaluations') || '[]');
+    const found = data.find((a) => a.id === id);
+    if (found) setEntry(found);
+  }, [id]);
+
+  useEffect(() => {
+    const sum = Number(tercoSuperior) + Number(tercoMedio) + Number(tercoInferior);
+    setTercoError(sum !== 100);
+  }, [tercoSuperior, tercoMedio, tercoInferior]);
+
+  const highlights = highlightsInput
+    .split(',')
+    .map((h) => h.trim())
+    .filter(Boolean);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (tercoError) return;
+
+    const evaluation = {
+      overall_score: Number(overallScore),
+      symmetry_score: Number(symmetryScore),
+      thirds: {
+        superior: Number(tercoSuperior),
+        medio: Number(tercoMedio),
+        inferior: Number(tercoInferior),
+      },
+      categories: {
+        terco_superior: catSuperior,
+        terco_medio: catMedio,
+        terco_inferior: catInferior,
+        contorno_mandibular: catMandibular,
+      },
+      highlights,
+      visagismo_tips: { cabelo, barba, oculos },
+      evaluatedAt: new Date().toISOString(),
+    };
+
+    // Save evaluation and remove from pending
+    const pending = JSON.parse(localStorage.getItem('pending_evaluations') || '[]');
+    const updated = pending.filter((a) => a.id !== id);
+    localStorage.setItem('pending_evaluations', JSON.stringify(updated));
+
+    const evaluations = JSON.parse(localStorage.getItem('evaluations') || '[]');
+    evaluations.push({ ...entry, evaluation });
+    localStorage.setItem('evaluations', JSON.stringify(evaluations));
+
+    setSubmitted(true);
+    setTimeout(() => navigate('/dashboard/admin'), 1500);
+  }
+
+  if (!entry) {
+    return (
+      <DashboardLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-text-secondary">Análise não encontrada.</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <DashboardLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <CheckCircle2 className="w-12 h-12 text-green-400" />
+            <p className="text-sm text-green-400 font-medium">Avaliação salva com sucesso!</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="flex-1 p-4 md:p-8 md:pl-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <button
+              onClick={() => navigate('/dashboard/admin')}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors text-sm"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar
+            </button>
+            <div className="h-5 w-px bg-border" />
+            <h1 className="text-lg font-bold tracking-tight text-text-primary">
+              Avaliar Análise
+            </h1>
+            <span className="text-xs text-text-muted ml-auto">
+              ID: {id.slice(0, 8)}... — {entry.userName}
+            </span>
+          </div>
+        {/* Fotos */}
+        <div className="mb-8">
+          <h2 className="text-sm font-semibold text-text-secondary mb-3">Fotos Enviadas</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { key: 'front', label: 'Frontal' },
+              { key: 'left', label: 'Perfil Esquerdo' },
+              { key: 'right', label: 'Perfil Direito' },
+            ].map(({ key, label }) => (
+              <div key={key} className="rounded-2xl border border-border bg-card-bg overflow-hidden">
+                {entry.photos?.[key] ? (
+                  <img src={entry.photos[key]} alt={label} className="w-full aspect-[3/4] object-cover" />
+                ) : (
+                  <div className="w-full aspect-[3/4] flex items-center justify-center bg-white/[0.02]">
+                    <p className="text-xs text-text-muted">Sem foto</p>
+                  </div>
+                )}
+                <div className="px-3 py-2 border-t border-border">
+                  <p className="text-[11px] font-medium text-text-secondary text-center">{label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Formulário */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Scores Gerais */}
+          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+            <h2 className="text-sm font-semibold text-text-secondary">Scores Gerais</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label>Harmonia Geral ({overallScore})</Label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={overallScore}
+                  onChange={(e) => setOverallScore(e.target.value)}
+                  className="w-full accent-brand-accent"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Simetria ({symmetryScore})</Label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={symmetryScore}
+                  onChange={(e) => setSymmetryScore(e.target.value)}
+                  className="w-full accent-brand-accent"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Terços Faciais */}
+          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-text-secondary">Divisão dos Terços Faciais</h2>
+              <span className={`text-xs font-medium ${tercoError ? 'text-red-400' : 'text-green-400'}`}>
+                Soma: {Number(tercoSuperior) + Number(tercoMedio) + Number(tercoInferior)}%
+                {tercoError && ' (deve ser 100%)'}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="space-y-2">
+                <Label>Terço Superior (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={tercoSuperior}
+                  onChange={(e) => setTercoSuperior(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Terço Médio (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={tercoMedio}
+                  onChange={(e) => setTercoMedio(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Terço Inferior (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={tercoInferior}
+                  onChange={(e) => setTercoInferior(e.target.value)}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Categorias */}
+          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+            <h2 className="text-sm font-semibold text-text-secondary">Avaliação por Categorias</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {[
+                { label: 'Terço Superior', value: catSuperior, set: setCatSuperior },
+                { label: 'Terço Médio', value: catMedio, set: setCatMedio },
+                { label: 'Terço Inferior', value: catInferior, set: setCatInferior },
+                { label: 'Contorno Mandibular', value: catMandibular, set: setCatMandibular },
+              ].map(({ label, value, set }) => (
+                <div key={label} className="space-y-2">
+                  <Label>{label}</Label>
+                  <select
+                    value={value}
+                    onChange={(e) => set(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  >
+                    {CATEGORY_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Highlights */}
+          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+            <h2 className="text-sm font-semibold text-text-secondary">Pontos Fortes (Highlights)</h2>
+            <div className="space-y-2">
+              <Label>Separados por vírgula</Label>
+              <Input
+                placeholder="Ex: Simetria excellent, Contorno definido, Proporção harmoniosa"
+                value={highlightsInput}
+                onChange={(e) => setHighlightsInput(e.target.value)}
+              />
+            </div>
+            {highlights.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {highlights.map((h, i) => (
+                  <Badge key={i}>{h}</Badge>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Visagismo */}
+          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+            <h2 className="text-sm font-semibold text-text-secondary">Recomendações de Visagismo</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="space-y-2">
+                <Label>Corte de Cabelo</Label>
+                <textarea
+                  value={cabelo}
+                  onChange={(e) => setCabelo(e.target.value)}
+                  placeholder="Ex: Corte curto nas laterais, mais volume no topo..."
+                  rows={3}
+                  className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Barba</Label>
+                <textarea
+                  value={barba}
+                  onChange={(e) => setBarba(e.target.value)}
+                  placeholder="Ex: Barba curta uniforme, sem bigode..."
+                  rows={3}
+                  className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Óculos</Label>
+                <textarea
+                  value={oculos}
+                  onChange={(e) => setOculos(e.target.value)}
+                  placeholder="Ex: Arredondados, aro fino, tons neutros..."
+                  rows={3}
+                  className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Botão Enviar */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={tercoError}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                !tercoError
+                  ? 'bg-brand-accent text-background hover:opacity-90'
+                  : 'bg-white/5 text-text-muted border border-border cursor-not-allowed'
+              }`}
+            >
+              <Save className="w-4 h-4" />
+              Enviar Avaliação
+            </button>
+          </div>
+        </form>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

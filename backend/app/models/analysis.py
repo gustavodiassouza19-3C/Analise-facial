@@ -20,6 +20,7 @@ class FacialAnalysis(Base):
     photo_front_url = Column(String(500), nullable=True)
     photo_right_url = Column(String(500), nullable=True)
     photo_left_url = Column(String(500), nullable=True)
+    status = Column(String(20), nullable=False, default="pending")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

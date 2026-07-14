@@ -55,7 +55,7 @@ export default function ChartRadialText({ score = 0, label = "Simetria Global" }
               className="fill-chart-track"
               polarRadius={[65, 55]}
             />
-            <RadialBar dataKey="value" background={{ fill: "#1a1a1a" }} cornerRadius={10} />
+            <RadialBar dataKey="value" background={{ fill: "#141414" }} cornerRadius={10} />
             <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
               <Label
                 content={({ viewBox }) => {

@@ -5,6 +5,11 @@ import ResultsPage from '@/pages/ResultsPage';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
+import AdminQueuePage from '@/pages/AdminQueuePage';
+import AdminEvaluatePage from '@/pages/AdminEvaluatePage';
+import ProgressPage from '@/pages/ProgressPage';
+import EvaluationDetailPage from '@/pages/EvaluationDetailPage';
+import ProfilePage from '@/pages/ProfilePage';
 
 const router = createBrowserRouter([
   {
@@ -29,6 +34,26 @@ const router = createBrowserRouter([
       {
         path: '/dashboard/results',
         element: <ResultsPage />,
+      },
+      {
+        path: '/dashboard/admin',
+        element: <AdminQueuePage />,
+      },
+      {
+        path: '/dashboard/admin/evaluate/:id',
+        element: <AdminEvaluatePage />,
+      },
+      {
+        path: '/dashboard/progress',
+        element: <ProgressPage />,
+      },
+      {
+        path: '/dashboard/evaluation/:id',
+        element: <EvaluationDetailPage />,
+      },
+      {
+        path: '/dashboard/profile',
+        element: <ProfilePage />,
       },
     ],
   },

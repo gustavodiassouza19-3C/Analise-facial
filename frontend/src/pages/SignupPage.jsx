@@ -6,11 +6,29 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+const API_BASE = import.meta.env.DEV
+  ? '/api/v1'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
+
+const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Neutro'];
+const STYLE_OPTIONS = [
+  'Harmonia Facial',
+  'Simetria e Proporção',
+  'Estilo Pessoal',
+  'Pré-Procedure',
+  'Autoconhecimento',
+];
+
 export default function SignupPage() {
-  const { register } = useAuth();
+  const { register, token } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [fullName, setFullName] = useState('');
+  const [gender, setGender] = useState('');
+  const [age, setAge] = useState('');
+  const [styleObjective, setStyleObjective] = useState('');
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -25,12 +43,31 @@ export default function SignupPage() {
 
       if (password !== confirmPassword) {
         setError('As senhas não coincidem');
+        setLoading(false);
         return;
       }
 
       const result = await register(email, password);
 
       if (result.success) {
+        // Save profile data
+        try {
+          await fetch(`${API_BASE}/profile/`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              full_name: fullName || null,
+              gender: gender || null,
+              age: age ? Number(age) : null,
+              style_objective: styleObjective || null,
+            }),
+          });
+        } catch {
+          // Profile save failed, but account was created
+        }
         navigate('/dashboard');
       } else {
         setError(result.error);
@@ -57,6 +94,18 @@ export default function SignupPage() {
                   {error}
                 </div>
               )}
+              <div className="grid gap-2">
+                <Label htmlFor="full-name" className="text-text-secondary">Nome Completo</Label>
+                <Input
+                  id="full-name"
+                  name="full-name"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="bg-background border-border text-text-primary placeholder:text-text-muted"
+                />
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="email" className="text-text-secondary">Email</Label>
                 <Input
@@ -91,6 +140,50 @@ export default function SignupPage() {
                   minLength={8}
                   className="bg-background border-border text-text-primary"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-text-secondary">Idade</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="120"
+                  placeholder="Ex: 28"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  className="bg-background border-border text-text-primary"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-text-secondary">Gênero</Label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
+                >
+                  <option value="">Selecione</option>
+                  {GENDER_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-text-secondary">Objetivo de Estilo</Label>
+                <div className="flex flex-wrap gap-2">
+                  {STYLE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setStyleObjective(styleObjective === opt ? '' : opt)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        styleObjective === opt
+                          ? 'bg-brand-accent text-background'
+                          : 'bg-white/5 text-text-secondary border border-border hover:border-brand-accent/40'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
               </div>
               <Button
                 type="submit"

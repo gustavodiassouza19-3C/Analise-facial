@@ -3,16 +3,14 @@
 const API_BASE = import.meta.env.DEV ? '/api/v1' : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
 
 /**
- * Envia 3 fotos para análise via DeepSeek.
+ * Envia 1 foto frontal para análise via DeepSeek.
  * POST /api/v1/analyze/
  *
  * @param {string} photoFront - Base64 da foto frontal
- * @param {string} photoRight - Base64 da foto perfil direito
- * @param {string} photoLeft  - Base64 da foto perfil esquerdo
  * @param {string} token      - JWT de autenticação
  * @returns {Promise<Object>} - Resultado da análise
  */
-export async function analyzeWithAI(photoFront, photoRight, photoLeft, token) {
+export async function analyzeWithAI(photoFront, token) {
   const response = await fetch(`${API_BASE}/analyze/`, {
     method: 'POST',
     headers: {
@@ -21,8 +19,6 @@ export async function analyzeWithAI(photoFront, photoRight, photoLeft, token) {
     },
     body: JSON.stringify({
       photo_front: photoFront,
-      photo_right: photoRight,
-      photo_left: photoLeft,
     }),
   });
 

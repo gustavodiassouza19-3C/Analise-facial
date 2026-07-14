@@ -40,8 +40,14 @@ class AnalysisResponse(BaseModel):
 
 class AnalysisCreate(BaseModel):
     photo_front: str  # Base64 encoded
-    photo_right: str
-    photo_left: str
+
+
+class AnalysisPendingResponse(BaseModel):
+    id: str
+    user_id: str
+    user_name: str
+    overall_score: float
+    created_at: datetime
 
 
 # ------------------------------------------------------------------ #

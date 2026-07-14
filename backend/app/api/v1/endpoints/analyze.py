@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.connection import get_db
-from app.schemas.analysis import AnalysisCreate, AnalysisResponse
+from app.schemas.analysis import AnalysisCreate, AnalysisResponse, AnalysisPendingResponse
 from app.services.analysis_service import AnalysisService
+from app.repositories.analysis_repository import AnalysisRepository
 from app.core.security import get_current_user
 from app.models.user import User
 
@@ -34,3 +35,15 @@ async def get_analysis_history(
     """
     analysis_service = AnalysisService(db)
     return await analysis_service.get_user_analyses(current_user.id)
+
+
+@router.get("/pending", response_model=list[AnalysisPendingResponse])
+async def get_pending_analyses(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get all analyses pending manual review.
+    """
+    repo = AnalysisRepository(db)
+    return await repo.get_pending()
