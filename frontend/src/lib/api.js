@@ -1,34 +1,34 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// In development, Vite proxy forwards /api/* to the backend
+// In production, use VITE_API_URL env var
+const API_BASE = import.meta.env.DEV ? '/api/v1' : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
 
 /**
- * Envia pontos anatômicos para a rota matemática do backend.
- * POST /api/v1/analysis/calculate-metrics
+ * Envia 3 fotos para análise via DeepSeek.
+ * POST /api/v1/analyze/
  *
- * @param {Object} points - 9 pontos faciais com { x, y }
- * @returns {Promise<Object>} - thirds, nasolabial_angle, ricketts
+ * @param {string} photoFront - Base64 da foto frontal
+ * @param {string} photoRight - Base64 da foto perfil direito
+ * @param {string} photoLeft  - Base64 da foto perfil esquerdo
+ * @param {string} token      - JWT de autenticação
+ * @returns {Promise<Object>} - Resultado da análise
  */
-export async function sendDataToBackend(points) {
-  const body = {
-    trichion:            { x: points.trichion.x,            y: points.trichion.y },
-    glabella:            { x: points.glabella.x,            y: points.glabella.y },
-    subnasale_front:     { x: points.subnasale_front.x,     y: points.subnasale_front.y },
-    menton_front:        { x: points.menton_front.x,        y: points.menton_front.y },
-    subnasale_profile:   { x: points.subnasale_profile.x,   y: points.subnasale_profile.y },
-    pranasale:           { x: points.pranasale.x,           y: points.pranasale.y },
-    labiale_superius:    { x: points.labiale_superius.x,    y: points.labiale_superius.y },
-    labiale_inferius:    { x: points.labiale_inferius.x,    y: points.labiale_inferius.y },
-    menton_profile:      { x: points.menton_profile.x,      y: points.menton_profile.y },
-  };
-
-  const response = await fetch(`${API_BASE}/analysis/calculate-metrics`, {
+export async function analyzeWithAI(photoFront, photoRight, photoLeft, token) {
+  const response = await fetch(`${API_BASE}/analyze/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      photo_front: photoFront,
+      photo_right: photoRight,
+      photo_left: photoLeft,
+    }),
   });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || 'Erro ao calcular métricas geométricas');
+    throw new Error(error.detail || 'Erro ao analisar rosto');
   }
 
   return response.json();

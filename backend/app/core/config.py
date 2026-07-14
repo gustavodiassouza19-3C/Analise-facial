@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     ]
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/facial_analysis"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./facial_analysis.db"
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -33,9 +33,14 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # MediaPipe
+    # MediaPipe (face detection only)
     MIN_DETECTION_CONFIDENCE: float = 0.5
     MIN_TRACKING_CONFIDENCE: float = 0.5
+
+    # DeepSeek API
+    DEEPSEEK_API_KEY: str = ""
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+    DEEPSEEK_MODEL: str = "deepseek-chat"
 
 
 settings = Settings()

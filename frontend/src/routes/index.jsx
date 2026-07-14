@@ -1,7 +1,10 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import FaceAnalyzer from '@/components/evaluation/FaceAnalyzer';
+import ResultsPage from '@/pages/ResultsPage';
 import LandingPage from '@/pages/LandingPage';
+import LoginPage from '@/pages/LoginPage';
+import SignupPage from '@/pages/SignupPage';
 
 const router = createBrowserRouter([
   {
@@ -10,11 +13,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <Navigate to="/dashboard" replace />,
+    element: <LoginPage />,
   },
   {
     path: '/signup',
-    element: <Navigate to="/dashboard" replace />,
+    element: <SignupPage />,
   },
   {
     element: <ProtectedRoute />,
@@ -22,6 +25,10 @@ const router = createBrowserRouter([
       {
         path: '/dashboard',
         element: <FaceAnalyzer />,
+      },
+      {
+        path: '/dashboard/results',
+        element: <ResultsPage />,
       },
     ],
   },

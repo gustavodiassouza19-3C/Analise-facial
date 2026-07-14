@@ -5,7 +5,7 @@ import { useRef, useCallback, useEffect, useState } from 'react';
  */
 const LANDMARK_MAP = {
   trichion:          10,
-  glabella:           9,
+  glabella:           8,
   subnasale_front:    2,
   menton_front:     152,
   subnasale_profile:  2,
