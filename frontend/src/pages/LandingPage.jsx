@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import ColorBends from "@/components/ui/ColorBends";
 import TextPressure from '@/components/ui/TextPressure';
 import CardNav from '@/components/ui/CardNav';
-import MagicBento from '@/components/ui/MagicBento';
+
 import GlassSurface from '@/components/ui/GlassSurface';
 import logo from '@/assets/logo.png';
 import heroBg from '@/assets/background_ladinpage.png';
@@ -171,7 +171,7 @@ export default function LandingPage() {
           >
             <Link
               to="/login"
-              className="flex items-center justify-center w-[160px] h-[48px] rounded-xl bg-brand-accent text-background font-semibold text-sm hover:opacity-90 transition-opacity"
+              className="inline-flex items-center justify-center w-[180px] h-[52px] rounded-xl bg-brand-accent text-background font-semibold text-base hover:opacity-90 transition-opacity text-center"
             >
               Iniciar
             </Link>
@@ -182,8 +182,8 @@ export default function LandingPage() {
             transition={{ delay: 0.75, duration: 0.6, ease: "easeOut" }}
           >
             <GlassSurface
-              width={160}
-              height={48}
+              width={180}
+              height={52}
               borderRadius={12}
               backgroundOpacity={0.2}
               blur={10}
@@ -193,7 +193,7 @@ export default function LandingPage() {
             >
               <Link
                 to="/signup"
-                className="flex items-center justify-center w-full h-full text-white font-medium text-sm text-center"
+                className="inline-flex items-center justify-center w-full h-full text-white font-medium text-base text-center"
               >
                 Criar Conta
               </Link>
@@ -259,22 +259,7 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* MagicBento Section */}
-        <ScrollScaleUp amount={0.15} className="w-full max-w-7xl mx-auto px-6 py-20">
-          <MagicBento
-            textAutoHide={true}
-            enableStars
-            enableSpotlight
-            enableBorderGlow={true}
-            enableTilt={false}
-            enableMagnetism={false}
-            clickEffect
-            spotlightRadius={400}
-            particleCount={12}
-            glowColor="211, 171, 57"
-            disableAnimations={false}
-          />
-        </ScrollScaleUp>
+
       </section>
 
     </div>
