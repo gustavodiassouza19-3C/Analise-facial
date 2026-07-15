@@ -36,3 +36,7 @@
   --sidebar-border: 43 40% 52%;
   --sidebar-ring: 43 75% 52%;
 }
+
+html, body {
+  overflow-x: hidden;
+}

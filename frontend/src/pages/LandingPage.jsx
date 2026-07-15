@@ -184,7 +184,12 @@ export default function LandingPage() {
                 className="w-full h-full"
               />
             </div>
-            <div className="relative z-10">
+            <motion.div
+              className="relative z-10"
+              initial={prefersReduced ? false : { opacity: 0, scaleX: 0, originX: 0.5 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1], delay: 0.15 }}
+            >
               <CardNav
                 logo={logo}
                 logoAlt="Company Logo"
@@ -194,7 +199,7 @@ export default function LandingPage() {
                 buttonBgColor="#D3AB39"
                 buttonTextColor="#00090b"
               />
-            </div>
+            </motion.div>
           </div>
         </header>
 
