@@ -1,10 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { API_BASE } from '@/lib/api';
 
 const AuthContext = createContext(null);
-
-// In development, Vite proxy forwards /api/* to the backend
-// In production, use VITE_API_URL env var
-const API_BASE = import.meta.env.DEV ? '/api/v1' : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));

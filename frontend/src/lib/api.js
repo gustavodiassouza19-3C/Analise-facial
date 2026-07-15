@@ -1,6 +1,4 @@
-// In development, Vite proxy forwards /api/* to the backend
-// In production, use VITE_API_URL env var
-const API_BASE = import.meta.env.DEV ? '/api/v1' : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
+export const API_BASE = import.meta.env.DEV ? '/api/v1' : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
 
 /**
  * Envia 1 foto frontal para análise via DeepSeek.

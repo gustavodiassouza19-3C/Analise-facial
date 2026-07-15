@@ -1,4 +1,4 @@
-import { ScanFace, GitCompareArrows, BarChart3, UserCircle, Plus } from "lucide-react"
+import { ScanFace, BarChart3, UserCircle, Plus } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 import logo from "@/assets/logo.png"
 

@@ -5,10 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-const API_BASE = import.meta.env.DEV
-  ? '/api/v1'
-  : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
+import { API_BASE } from '@/lib/api';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Neutro'];
 const STYLE_OPTIONS = [

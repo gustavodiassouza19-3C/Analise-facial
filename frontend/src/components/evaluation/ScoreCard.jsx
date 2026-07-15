@@ -1,4 +1,3 @@
-import { TrendingUp } from "lucide-react"
 import {
   Label,
   PolarGrid,
@@ -18,21 +17,18 @@ import {
   ChartContainer,
 } from "@/components/ui/chart"
 
-const chartData = [
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-]
-
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  safari: {
-    label: "Safari",
-    color: "var(--chart-2)",
+  score: {
+    label: "Score",
+    color: "#d3ab39",
   },
 }
 
-export default function ScoreCard() {
+export default function ScoreCard({ score = 0, label = "Score Geral" }) {
+  const chartData = [
+    { metric: "score", value: score, fill: "#d3ab39" },
+  ]
+
   return (
     <Card className="flex flex-row items-center gap-4 p-4 bg-card-bg border border-border rounded-2xl backdrop-blur-md">
       <CardContent className="flex-shrink-0 pb-0 pl-0">
@@ -51,10 +47,10 @@ export default function ScoreCard() {
               gridType="circle"
               radialLines={false}
               stroke="none"
-              className="first:fill-card-bg last:fill-chart-track"
+              className="fill-chart-track"
               polarRadius={[55, 48]}
             />
-            <RadialBar dataKey="visitors" background={{ fill: "#1a1a1a" }} cornerRadius={10} />
+            <RadialBar dataKey="value" background={{ fill: "#1a1a1a" }} cornerRadius={10} />
             <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
               <Label
                 content={({ viewBox }) => {
@@ -71,7 +67,7 @@ export default function ScoreCard() {
                           y={viewBox.cy}
                           className="fill-white text-xl font-bold"
                         >
-                          {chartData[0].visitors.toLocaleString()}
+                          {score}
                         </tspan>
                       </text>
                     )
@@ -83,12 +79,8 @@ export default function ScoreCard() {
         </ChartContainer>
       </CardContent>
       <div className="flex flex-col gap-1 min-w-0">
-        <CardTitle className="text-sm font-semibold text-text-primary">Pontuação</CardTitle>
-        <CardDescription className="text-xs text-text-secondary">Pontuação geral da análise</CardDescription>
-        <div className="flex items-center gap-1 text-xs font-medium text-emerald-500 mt-1">
-          <TrendingUp className="h-3 w-3" />
-          <span>+5.2% este mês</span>
-        </div>
+        <CardTitle className="text-sm font-semibold text-text-primary">{label}</CardTitle>
+        <CardDescription className="text-xs text-text-secondary">Pontuação da análise</CardDescription>
       </div>
     </Card>
   )
