@@ -8,7 +8,7 @@ export default {
   			background: '#0a0a0a',
   			'card-bg': '#141414',
   			'chart-track': '#1a1a1a',
-  			surface: 'rgba(1, 25, 31, 0.8)',
+  			surface: 'rgba(10, 10, 10, 0.8)',
   			border: 'rgba(211, 171, 57, 0.15)',
   			brand: {
   				primary: '#0a0a0a',

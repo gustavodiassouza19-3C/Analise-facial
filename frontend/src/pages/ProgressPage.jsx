@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import DashboardLayout from '@/components/DashboardLayout';
+import { StaggerContainer, StaggerItem, FadeIn, ScaleIn } from '@/components/ui/page-transition';
 
 export default function ProgressPage() {
   const navigate = useNavigate();
@@ -42,115 +43,126 @@ export default function ProgressPage() {
       <div className="flex-1 p-4 md:p-8 md:pl-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center gap-3 mb-8">
-            <BarChart3 className="w-5 h-5 text-brand-accent" />
-            <h1 className="text-lg font-bold tracking-tight text-text-primary">Meu Progresso</h1>
-          </div>
+          <FadeIn>
+            <div className="flex items-center gap-3 mb-8">
+              <BarChart3 className="w-5 h-5 text-brand-accent" />
+              <h1 className="text-lg font-bold tracking-tight text-text-primary">Meu Progresso</h1>
+            </div>
+          </FadeIn>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <Card className="bg-card-bg border-border">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-yellow-400" />
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <StaggerItem>
+              <Card className="bg-card-bg border-border">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-yellow-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-text-primary">{pending.length}</p>
+                      <p className="text-xs text-text-muted">Aguardando</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-text-primary">{pending.length}</p>
-                    <p className="text-xs text-text-muted">Aguardando</p>
+                </CardContent>
+              </Card>
+            </StaggerItem>
+            <StaggerItem>
+              <Card className="bg-card-bg border-border">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5 text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-text-primary">{evaluated.length}</p>
+                      <p className="text-xs text-text-muted">Avaliadas</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card-bg border-border">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 text-green-400" />
+                </CardContent>
+              </Card>
+            </StaggerItem>
+            <StaggerItem>
+              <Card className="bg-card-bg border-border">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-brand-accent/10 flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-brand-accent" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-text-primary">{pending.length + evaluated.length}</p>
+                      <p className="text-xs text-text-muted">Total</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-text-primary">{evaluated.length}</p>
-                    <p className="text-xs text-text-muted">Avaliadas</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card-bg border-border">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-accent/10 flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5 text-brand-accent" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-text-primary">{pending.length + evaluated.length}</p>
-                    <p className="text-xs text-text-muted">Total</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </StaggerItem>
+          </StaggerContainer>
 
           {/* Line Chart - Scores over time */}
           {evaluated.length > 0 && (
-            <Card className="bg-card-bg border-border rounded-2xl mb-8">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-brand-accent" />
-                  <CardTitle className="text-sm text-text-primary">Evolução das Pontuações</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis
-                        dataKey="label"
-                        stroke="#64748b"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        domain={[0, 100]}
-                        stroke="#64748b"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#141414',
-                          border: '1px solid rgba(211, 171, 57, 0.3)',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                        }}
-                        labelStyle={{ color: '#94a3b8' }}
-                        itemStyle={{ color: '#d3ab39' }}
-                        formatter={(value) => [`${value} pts`, 'Score']}
-                        labelFormatter={(label, payload) => {
-                          if (payload && payload[0]) {
-                            return payload[0].payload.date;
-                          }
-                          return label;
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="score"
-                        stroke="#d3ab39"
-                        strokeWidth={2}
-                        dot={{ fill: '#d3ab39', strokeWidth: 0, r: 4 }}
-                        activeDot={{ r: 6, stroke: '#d3ab39', strokeWidth: 2, fill: '#141414' }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <ScaleIn delay={0.2}>
+              <Card className="bg-card-bg border-border rounded-2xl mb-8">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-brand-accent" />
+                    <CardTitle className="text-sm text-text-primary">Evolução das Pontuações</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                        <XAxis
+                          dataKey="label"
+                          stroke="#64748b"
+                          fontSize={11}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis
+                          domain={[0, 100]}
+                          stroke="#64748b"
+                          fontSize={11}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#141414',
+                            border: '1px solid rgba(211, 171, 57, 0.3)',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                          }}
+                          labelStyle={{ color: '#94a3b8' }}
+                          itemStyle={{ color: '#d3ab39' }}
+                          formatter={(value) => [`${value} pts`, 'Score']}
+                          labelFormatter={(label, payload) => {
+                            if (payload && payload[0]) {
+                              return payload[0].payload.date;
+                            }
+                            return label;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="score"
+                          stroke="#d3ab39"
+                          strokeWidth={2}
+                          dot={{ fill: '#d3ab39', strokeWidth: 0, r: 4 }}
+                          activeDot={{ r: 6, stroke: '#d3ab39', strokeWidth: 2, fill: '#141414' }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </ScaleIn>
           )}
 
           {/* Tabs */}
+          <FadeIn delay={0.3}>
           <Tabs defaultValue="pending">
             <TabsList className="flex-row gap-1 p-1 bg-white/[0.02] rounded-xl border border-border w-fit mb-6">
               <TabsTrigger value="pending" className="gap-2">
@@ -256,6 +268,7 @@ export default function ProgressPage() {
               )}
             </TabsContent>
           </Tabs>
+          </FadeIn>
         </div>
       </div>
     </DashboardLayout>

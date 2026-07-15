@@ -4,6 +4,10 @@
     "shadcn": {
       "type": "local",
       "command": ["npx", "shadcn@latest", "mcp"]
+    },
+    "motion-ui": {
+      "type": "local",
+      "command": ["npx", "@pavui/motion-ui-mcp-server"]
     }
   }
 }

@@ -1,14 +1,25 @@
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import ColorBends from "@/components/ui/ColorBends";
 import TextPressure from '@/components/ui/TextPressure';
 import CardNav from '@/components/ui/CardNav';
 import MagicBento from '@/components/ui/MagicBento';
+import GlassSurface from '@/components/ui/GlassSurface';
 import logo from '@/assets/logo.png';
+import heroBg from '@/assets/background_ladinpage.png';
+import {
+  ScrollFadeUp,
+  ScrollScaleUp,
+  ScrollSlideLeft,
+  ScrollSlideRight,
+  ScrollStaggerContainer,
+  ScrollStaggerItem,
+} from '@/components/ui/page-transition';
 
 const navItems = [
   {
     label: "About",
-    bgColor: "#001115",
+    bgColor: "#0a0a0a",
     textColor: "#fff",
     links: [
       { label: "Company", href: "#company", ariaLabel: "About Company" },
@@ -17,7 +28,7 @@ const navItems = [
   },
   {
     label: "Projects",
-    bgColor: "#001115",
+    bgColor: "#0a0a0a",
     textColor: "#fff",
     links: [
       { label: "Featured", href: "#featured", ariaLabel: "Featured Projects" },
@@ -26,7 +37,7 @@ const navItems = [
   },
   {
     label: "Contact",
-    bgColor: "#001115",
+    bgColor: "#0a0a0a",
     textColor: "#fff",
     links: [
       { label: "Email", href: "mailto:info@example.com", ariaLabel: "Email us" },
@@ -35,6 +46,54 @@ const navItems = [
   }
 ];
 
+const features = [
+  {
+    icon: "🎯",
+    title: "Análise Precisa",
+    description: "IA avançada que mapeia mais de 468 pontos faciais para uma avaliação completa e detalhada.",
+    hueA: 40,
+    hueB: 50,
+  },
+  {
+    icon: "📊",
+    title: "Relatório Completo",
+    description: "Visualize terços faciais, simetria, harmonia e pontos fortes em um dashboard interativo.",
+    hueA: 30,
+    hueB: 45,
+  },
+  {
+    icon: "💡",
+    title: "Dicas de Visagismo",
+    description: "Recomendações personalizadas de corte, barba e óculos baseadas na sua morfologia.",
+    hueA: 45,
+    hueB: 55,
+  },
+  {
+    icon: "🔒",
+    title: "Privacidade Total",
+    description: "Suas fotos são processadas localmente e nunca armazenadas em servidores externos.",
+    hueA: 35,
+    hueB: 42,
+  },
+];
+
+const hue = (h) => `hsl(${h}, 100%, 50%)`;
+
+const cardVariants = {
+  offscreen: {
+    y: 300,
+  },
+  onscreen: {
+    y: 50,
+    rotate: -10,
+    transition: {
+      type: "spring",
+      bounce: 0.4,
+      duration: 0.8,
+    },
+  },
+};
+
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen w-screen bg-background overflow-x-hidden">
@@ -42,34 +101,48 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative h-screen w-full">
         <div className="absolute inset-0 w-full h-full z-0">
-          <ColorBends
-            rotation={90}
-            speed={0.2}
-            colors={["#d3ab39", "#a26a03", "#d339a0"]}
-            transparent={false}
-            autoRotate={0.65}
-            scale={1}
-            frequency={1}
-            warpStrength={1}
-            mouseInfluence={1}
-            parallax={0.5}
-            noise={0.15}
-            iterations={1}
-            intensity={1.5}
-            bandWidth={6}
+          <img
+            src={heroBg}
+            alt="Background"
+            className="w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-background/40" />
         </div>
 
         <header className="absolute top-0 left-0 w-full z-30 pointer-events-auto">
-          <CardNav
-            logo={logo}
-            logoAlt="Company Logo"
-            items={navItems}
-            baseColor="rgba(0, 9, 11, 0.75)"
-            menuColor="#fbf5ff"
-            buttonBgColor="#D3AB39"
-            buttonTextColor="#00090b"
-          />
+          <div className="relative w-full">
+            <div className="absolute inset-0 z-0">
+              <GlassSurface
+                width="100%"
+                height="100%"
+                borderRadius={0}
+                backgroundOpacity={0.08}
+                blur={20}
+                saturation={2}
+                brightness={60}
+                displace={2}
+                distortionScale={-250}
+                redOffset={40}
+                greenOffset={15}
+                blueOffset={5}
+                borderWidth={0.1}
+                opacity={0.85}
+                mixBlendMode="screen"
+                className="w-full h-full"
+              />
+            </div>
+            <div className="relative z-10">
+              <CardNav
+                logo={logo}
+                logoAlt="Company Logo"
+                items={navItems}
+                baseColor="rgba(0, 9, 11, 0.75)"
+                menuColor="#fbf5ff"
+                buttonBgColor="#D3AB39"
+                buttonTextColor="#00090b"
+              />
+            </div>
+          </div>
         </header>
 
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-full max-w-4xl px-6 pointer-events-none">
@@ -90,25 +163,104 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex gap-4">
-          <Link
-            to="/login"
-            className="px-8 py-3 rounded-xl bg-brand-accent text-background font-semibold text-sm hover:opacity-90 transition-opacity"
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex gap-4 justify-center items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.6, ease: "easeOut" }}
           >
-            Iniciar
-          </Link>
-          <Link
-            to="/signup"
-            className="px-8 py-3 rounded-xl border border-white/20 text-white font-medium text-sm hover:bg-white/10 transition-colors"
+            <Link
+              to="/login"
+              className="flex items-center justify-center w-[160px] h-[48px] rounded-xl bg-brand-accent text-background font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              Iniciar
+            </Link>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75, duration: 0.6, ease: "easeOut" }}
           >
-            Criar Conta
-          </Link>
+            <GlassSurface
+              width={160}
+              height={48}
+              borderRadius={12}
+              backgroundOpacity={0.2}
+              blur={10}
+              saturation={1.3}
+              brightness={50}
+              displace={0.3}
+            >
+              <Link
+                to="/signup"
+                className="flex items-center justify-center w-full h-full text-white font-medium text-sm text-center"
+              >
+                Criar Conta
+              </Link>
+            </GlassSurface>
+          </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="relative z-20 w-full max-w-7xl mx-auto px-6 py-20 bg-background">
-        <div className="w-full flex flex-col items-center justify-center">
+      {/* Features Section - Scroll Triggered Cards */}
+      <section className="relative z-20 w-full bg-background">
+        {/* Section Header */}
+        <ScrollFadeUp className="w-full flex flex-col items-center justify-center pt-24 pb-12 px-6">
+          <span className="text-brand-accent text-sm font-medium tracking-widest uppercase mb-4">
+            Funcionalidades
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-text-primary text-center max-w-2xl">
+            Análise facial com inteligência artificial
+          </h2>
+          <p className="text-text-secondary text-center mt-4 max-w-xl">
+            Descubra os segredos da sua harmonia facial com tecnologia de ponta
+          </p>
+        </ScrollFadeUp>
+
+        {/* Scroll-Triggered Cards */}
+        <div className="max-w-5xl mx-auto px-6 pb-20">
+          {features.map((feature, i) => (
+            <motion.div
+              key={feature.title}
+              className="flex justify-center items-center relative py-10 mb-[-80px]"
+              initial="offscreen"
+              whileInView="onscreen"
+              viewport={{ once: true, amount: 0.8 }}
+            >
+              {/* Animated splash + card container */}
+              <motion.div
+                className="relative"
+                variants={cardVariants}
+                style={{ transformOrigin: "10% 60%" }}
+              >
+                {/* Gradient splash — moves with the card */}
+                <div
+                  className="absolute -inset-4 opacity-80 pointer-events-none"
+                  style={{
+                    background: `linear-gradient(306deg, ${hue(feature.hueA)}, ${hue(feature.hueB)})`,
+                    clipPath: `path("M 0 303.5 C 0 292.454 8.995 285.101 20 283.5 L 460 219.5 C 470.085 218.033 480 228.454 480 239.5 L 500 430 C 500 441.046 491.046 450 480 450 L 20 450 C 8.954 450 0 441.046 0 430 Z")`,
+                  }}
+                />
+
+                {/* Card */}
+                <div className="relative z-10 w-[300px] h-[430px] rounded-2xl bg-card-bg border border-border flex flex-col items-center justify-center gap-4 shadow-2xl overflow-hidden">
+                  <div className="flex flex-col items-center justify-center gap-4 p-6">
+                    <span className="text-7xl">{feature.icon}</span>
+                    <h3 className="text-lg font-bold text-text-primary text-center">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-text-secondary text-center leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* MagicBento Section */}
+        <ScrollScaleUp amount={0.15} className="w-full max-w-7xl mx-auto px-6 py-20">
           <MagicBento
             textAutoHide={true}
             enableStars
@@ -122,7 +274,7 @@ export default function LandingPage() {
             glowColor="211, 171, 57"
             disableAnimations={false}
           />
-        </div>
+        </ScrollScaleUp>
       </section>
 
     </div>

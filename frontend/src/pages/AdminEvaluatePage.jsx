@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import DashboardLayout from '@/components/DashboardLayout';
+import { FadeIn, ScaleIn, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 
 const CATEGORY_OPTIONS = ['Excelente', 'Bom', 'Regular', 'Ajustável'];
 
@@ -109,32 +110,37 @@ export default function AdminEvaluatePage() {
     <DashboardLayout>
       <div className="flex-1 p-4 md:p-8 md:pl-4">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <button
-              onClick={() => navigate('/dashboard/admin')}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors text-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Voltar
-            </button>
-            <div className="h-5 w-px bg-border" />
-            <h1 className="text-lg font-bold tracking-tight text-text-primary">
-              Avaliar Análise
-            </h1>
-            <span className="text-xs text-text-muted ml-auto">
-              ID: {id.slice(0, 8)}... — {entry.userName}
-            </span>
-          </div>
+          <FadeIn>
+            <div className="flex items-center gap-3 mb-8">
+              <button
+                onClick={() => navigate('/dashboard/admin')}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
+              </button>
+              <div className="h-5 w-px bg-border" />
+              <h1 className="text-lg font-bold tracking-tight text-text-primary">
+                Avaliar Análise
+              </h1>
+              <span className="text-xs text-text-muted ml-auto">
+                ID: {id.slice(0, 8)}... — {entry.userName}
+              </span>
+            </div>
+          </FadeIn>
+
         {/* Fotos */}
-        <div className="mb-8">
-          <h2 className="text-sm font-semibold text-text-secondary mb-3">Fotos Enviadas</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { key: 'front', label: 'Frontal' },
-              { key: 'left', label: 'Perfil Esquerdo' },
-              { key: 'right', label: 'Perfil Direito' },
-            ].map(({ key, label }) => (
-              <div key={key} className="rounded-2xl border border-border bg-card-bg overflow-hidden">
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <FadeIn delay={0.1}>
+            <h2 className="text-sm font-semibold text-text-secondary mb-3 col-span-full">Fotos Enviadas</h2>
+          </FadeIn>
+          {[
+            { key: 'front', label: 'Frontal' },
+            { key: 'left', label: 'Perfil Esquerdo' },
+            { key: 'right', label: 'Perfil Direito' },
+          ].map(({ key, label }) => (
+            <StaggerItem key={key}>
+              <div className="rounded-2xl border border-border bg-card-bg overflow-hidden">
                 {entry.photos?.[key] ? (
                   <img src={entry.photos[key]} alt={label} className="w-full aspect-[3/4] object-cover" />
                 ) : (
@@ -146,182 +152,194 @@ export default function AdminEvaluatePage() {
                   <p className="text-[11px] font-medium text-text-secondary text-center">{label}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </StaggerItem>
+          ))}
+        </StaggerContainer>
 
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Scores Gerais */}
-          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-text-secondary">Scores Gerais</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <Label>Harmonia Geral ({overallScore})</Label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={overallScore}
-                  onChange={(e) => setOverallScore(e.target.value)}
-                  className="w-full accent-brand-accent"
-                />
+          <FadeIn delay={0.2}>
+            <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+              <h2 className="text-sm font-semibold text-text-secondary">Scores Gerais</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <Label>Harmonia Geral ({overallScore})</Label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={overallScore}
+                    onChange={(e) => setOverallScore(e.target.value)}
+                    className="w-full accent-brand-accent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Simetria ({symmetryScore})</Label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={symmetryScore}
+                    onChange={(e) => setSymmetryScore(e.target.value)}
+                    className="w-full accent-brand-accent"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Simetria ({symmetryScore})</Label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={symmetryScore}
-                  onChange={(e) => setSymmetryScore(e.target.value)}
-                  className="w-full accent-brand-accent"
-                />
-              </div>
-            </div>
-          </section>
+            </section>
+          </FadeIn>
 
           {/* Terços Faciais */}
-          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-text-secondary">Divisão dos Terços Faciais</h2>
-              <span className={`text-xs font-medium ${tercoError ? 'text-red-400' : 'text-green-400'}`}>
-                Soma: {Number(tercoSuperior) + Number(tercoMedio) + Number(tercoInferior)}%
-                {tercoError && ' (deve ser 100%)'}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              <div className="space-y-2">
-                <Label>Terço Superior (%)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={tercoSuperior}
-                  onChange={(e) => setTercoSuperior(e.target.value)}
-                />
+          <FadeIn delay={0.25}>
+            <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-text-secondary">Divisão dos Terços Faciais</h2>
+                <span className={`text-xs font-medium ${tercoError ? 'text-red-400' : 'text-green-400'}`}>
+                  Soma: {Number(tercoSuperior) + Number(tercoMedio) + Number(tercoInferior)}%
+                  {tercoError && ' (deve ser 100%)'}
+                </span>
               </div>
-              <div className="space-y-2">
-                <Label>Terço Médio (%)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={tercoMedio}
-                  onChange={(e) => setTercoMedio(e.target.value)}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="space-y-2">
+                  <Label>Terço Superior (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={tercoSuperior}
+                    onChange={(e) => setTercoSuperior(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Terço Médio (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={tercoMedio}
+                    onChange={(e) => setTercoMedio(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Terço Inferior (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={tercoInferior}
+                    onChange={(e) => setTercoInferior(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Terço Inferior (%)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={tercoInferior}
-                  onChange={(e) => setTercoInferior(e.target.value)}
-                />
-              </div>
-            </div>
-          </section>
+            </section>
+          </FadeIn>
 
           {/* Categorias */}
-          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-text-secondary">Avaliação por Categorias</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {[
-                { label: 'Terço Superior', value: catSuperior, set: setCatSuperior },
-                { label: 'Terço Médio', value: catMedio, set: setCatMedio },
-                { label: 'Terço Inferior', value: catInferior, set: setCatInferior },
-                { label: 'Contorno Mandibular', value: catMandibular, set: setCatMandibular },
-              ].map(({ label, value, set }) => (
-                <div key={label} className="space-y-2">
-                  <Label>{label}</Label>
-                  <select
-                    value={value}
-                    onChange={(e) => set(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                  >
-                    {CATEGORY_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Highlights */}
-          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-text-secondary">Pontos Fortes (Highlights)</h2>
-            <div className="space-y-2">
-              <Label>Separados por vírgula</Label>
-              <Input
-                placeholder="Ex: Simetria excellent, Contorno definido, Proporção harmoniosa"
-                value={highlightsInput}
-                onChange={(e) => setHighlightsInput(e.target.value)}
-              />
-            </div>
-            {highlights.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {highlights.map((h, i) => (
-                  <Badge key={i}>{h}</Badge>
+          <FadeIn delay={0.3}>
+            <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+              <h2 className="text-sm font-semibold text-text-secondary">Avaliação por Categorias</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {[
+                  { label: 'Terço Superior', value: catSuperior, set: setCatSuperior },
+                  { label: 'Terço Médio', value: catMedio, set: setCatMedio },
+                  { label: 'Terço Inferior', value: catInferior, set: setCatInferior },
+                  { label: 'Contorno Mandibular', value: catMandibular, set: setCatMandibular },
+                ].map(({ label, value, set }) => (
+                  <div key={label} className="space-y-2">
+                    <Label>{label}</Label>
+                    <select
+                      value={value}
+                      onChange={(e) => set(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    >
+                      {CATEGORY_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          </FadeIn>
+
+          {/* Highlights */}
+          <FadeIn delay={0.35}>
+            <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+              <h2 className="text-sm font-semibold text-text-secondary">Pontos Fortes (Highlights)</h2>
+              <div className="space-y-2">
+                <Label>Separados por vírgula</Label>
+                <Input
+                  placeholder="Ex: Simetria excellent, Contorno definido, Proporção harmoniosa"
+                  value={highlightsInput}
+                  onChange={(e) => setHighlightsInput(e.target.value)}
+                />
+              </div>
+              {highlights.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {highlights.map((h, i) => (
+                    <Badge key={i}>{h}</Badge>
+                  ))}
+                </div>
+              )}
+            </section>
+          </FadeIn>
 
           {/* Visagismo */}
-          <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-text-secondary">Recomendações de Visagismo</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              <div className="space-y-2">
-                <Label>Corte de Cabelo</Label>
-                <textarea
-                  value={cabelo}
-                  onChange={(e) => setCabelo(e.target.value)}
-                  placeholder="Ex: Corte curto nas laterais, mais volume no topo..."
-                  rows={3}
-                  className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
-                />
+          <FadeIn delay={0.4}>
+            <section className="rounded-2xl border border-border bg-card-bg p-6 space-y-5">
+              <h2 className="text-sm font-semibold text-text-secondary">Recomendações de Visagismo</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="space-y-2">
+                  <Label>Corte de Cabelo</Label>
+                  <textarea
+                    value={cabelo}
+                    onChange={(e) => setCabelo(e.target.value)}
+                    placeholder="Ex: Corte curto nas laterais, mais volume no topo..."
+                    rows={3}
+                    className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Barba</Label>
+                  <textarea
+                    value={barba}
+                    onChange={(e) => setBarba(e.target.value)}
+                    placeholder="Ex: Barba curta uniforme, sem bigode..."
+                    rows={3}
+                    className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Óculos</Label>
+                  <textarea
+                    value={oculos}
+                    onChange={(e) => setOculos(e.target.value)}
+                    placeholder="Ex: Arredondados, aro fino, tons neutros..."
+                    rows={3}
+                    className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Barba</Label>
-                <textarea
-                  value={barba}
-                  onChange={(e) => setBarba(e.target.value)}
-                  placeholder="Ex: Barba curta uniforme, sem bigode..."
-                  rows={3}
-                  className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Óculos</Label>
-                <textarea
-                  value={oculos}
-                  onChange={(e) => setOculos(e.target.value)}
-                  placeholder="Ex: Arredondados, aro fino, tons neutros..."
-                  rows={3}
-                  className="flex w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-none"
-                />
-              </div>
-            </div>
-          </section>
+            </section>
+          </FadeIn>
 
           {/* Botão Enviar */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={tercoError}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
-                !tercoError
-                  ? 'bg-brand-accent text-background hover:opacity-90'
-                  : 'bg-white/5 text-text-muted border border-border cursor-not-allowed'
-              }`}
-            >
-              <Save className="w-4 h-4" />
-              Enviar Avaliação
-            </button>
-          </div>
+          <FadeIn delay={0.45}>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={tercoError}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  !tercoError
+                    ? 'bg-brand-accent text-background hover:opacity-90'
+                    : 'bg-white/5 text-text-muted border border-border cursor-not-allowed'
+                }`}
+              >
+                <Save className="w-4 h-4" />
+                Enviar Avaliação
+              </button>
+            </div>
+          </FadeIn>
         </form>
         </div>
       </div>

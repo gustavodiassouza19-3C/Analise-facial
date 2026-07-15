@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 
 const DEFAULT_SPOTLIGHT_RADIUS = 300;
-const DEFAULT_GLOW_COLOR = '132, 0, 255'; 
+const DEFAULT_GLOW_COLOR = '211, 171, 57';
 const MOBILE_BREAKPOINT = 768;
 
 const cardData = [
@@ -452,7 +452,7 @@ const MagicBento = ({
           }
           
           .card--border-glow:hover {
-            box-shadow: 0 4px 20px rgba(46, 24, 78, 0.4), 0 0 30px rgba(${glowColor}, 0.2);
+            box-shadow: 0 4px 20px rgba(211, 171, 57, 0.2), 0 0 30px rgba(${glowColor}, 0.2);
           }
           
           .text-clamp-1 {

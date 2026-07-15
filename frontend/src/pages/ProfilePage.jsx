@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Field, FieldLabel, FieldContent, FieldDescription, FieldGroup } from '@/components/ui/field';
 import DashboardLayout from '@/components/DashboardLayout';
+import { FadeIn, ScaleIn, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 
 const API_BASE = import.meta.env.DEV
   ? '/api/v1'
@@ -107,114 +108,122 @@ export default function ProfilePage() {
     <DashboardLayout>
       <div className="flex-1 p-4 md:p-8 md:pl-4">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-lg font-bold tracking-tight text-text-primary mb-8">Meu Perfil</h1>
+          <FadeIn>
+            <h1 className="text-lg font-bold tracking-tight text-text-primary mb-8">Meu Perfil</h1>
+          </FadeIn>
 
           <form onSubmit={handleSave}>
             {/* Foto de perfil */}
-            <FieldGroup>
-              <Field orientation="vertical" className="items-center">
-                <div className="relative">
-                  <div className="w-28 h-28 rounded-full border-2 border-border overflow-hidden bg-card-bg flex items-center justify-center">
-                    {profilePicture ? (
-                      <img src={profilePicture} alt="Perfil" className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-12 h-12 text-text-muted" />
-                    )}
+            <ScaleIn delay={0.1}>
+              <FieldGroup>
+                <Field orientation="vertical" className="items-center">
+                  <div className="relative">
+                    <div className="w-28 h-28 rounded-full border-2 border-border overflow-hidden bg-card-bg flex items-center justify-center">
+                      {profilePicture ? (
+                        <img src={profilePicture} alt="Perfil" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-12 h-12 text-text-muted" />
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-brand-accent text-background flex items-center justify-center hover:opacity-90 transition-opacity"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={(e) => handlePhotoUpload(e.target.files?.[0])}
+                    />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-brand-accent text-background flex items-center justify-center hover:opacity-90 transition-opacity"
-                  >
-                    <Camera className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={(e) => handlePhotoUpload(e.target.files?.[0])}
-                  />
-                </div>
-                <FieldDescription>Clique no ícone para alterar a foto</FieldDescription>
-              </Field>
-            </FieldGroup>
+                  <FieldDescription>Clique no ícone para alterar a foto</FieldDescription>
+                </Field>
+              </FieldGroup>
+            </ScaleIn>
 
             {/* Dados pessoais */}
-            <div className="rounded-2xl border border-border bg-card-bg p-6 mt-8">
-              <h2 className="text-sm font-semibold text-text-secondary mb-5">Dados Pessoais</h2>
-              <FieldGroup>
-                <Field orientation="vertical">
-                  <FieldContent>
-                    <FieldLabel>Nome Completo</FieldLabel>
-                    <Input
-                      placeholder="Seu nome completo"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                    />
-                  </FieldContent>
-                </Field>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <FadeIn delay={0.2}>
+              <div className="rounded-2xl border border-border bg-card-bg p-6 mt-8">
+                <h2 className="text-sm font-semibold text-text-secondary mb-5">Dados Pessoais</h2>
+                <FieldGroup>
                   <Field orientation="vertical">
                     <FieldContent>
-                      <FieldLabel>Idade</FieldLabel>
+                      <FieldLabel>Nome Completo</FieldLabel>
                       <Input
-                        type="number"
-                        min="1"
-                        max="120"
-                        placeholder="Ex: 28"
-                        value={age}
-                        onChange={(e) => setAge(e.target.value)}
+                        placeholder="Seu nome completo"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                       />
-                      <FieldDescription>Anos</FieldDescription>
                     </FieldContent>
                   </Field>
 
-                  <Field orientation="vertical">
-                    <FieldContent>
-                      <FieldLabel>Gênero / Estilo</FieldLabel>
-                      <select
-                        value={gender}
-                        onChange={(e) => setGender(e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                      >
-                        <option value="">Selecione</option>
-                        {GENDER_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </FieldContent>
-                  </Field>
-                </div>
-              </FieldGroup>
-            </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <Field orientation="vertical">
+                      <FieldContent>
+                        <FieldLabel>Idade</FieldLabel>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="120"
+                          placeholder="Ex: 28"
+                          value={age}
+                          onChange={(e) => setAge(e.target.value)}
+                        />
+                        <FieldDescription>Anos</FieldDescription>
+                      </FieldContent>
+                    </Field>
+
+                    <Field orientation="vertical">
+                      <FieldContent>
+                        <FieldLabel>Gênero / Estilo</FieldLabel>
+                        <select
+                          value={gender}
+                          onChange={(e) => setGender(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
+                          <option value="">Selecione</option>
+                          {GENDER_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </FieldContent>
+                    </Field>
+                  </div>
+                </FieldGroup>
+              </div>
+            </FadeIn>
 
             {/* Objetivo de estilo */}
-            <div className="rounded-2xl border border-border bg-card-bg p-6 mt-6">
-              <h2 className="text-sm font-semibold text-text-secondary mb-5">Objetivo Principal de Estilo</h2>
-              <Field orientation="vertical">
-                <FieldContent>
-                  <div className="flex flex-wrap gap-2">
-                    {STYLE_OPTIONS.map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => setStyleObjective(styleObjective === opt ? '' : opt)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                          styleObjective === opt
-                            ? 'bg-brand-accent text-background'
-                            : 'bg-white/5 text-text-secondary border border-border hover:border-brand-accent/40'
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                  <FieldDescription>Selecione o seu objetivo principal</FieldDescription>
-                </FieldContent>
-              </Field>
-            </div>
+            <FadeIn delay={0.3}>
+              <div className="rounded-2xl border border-border bg-card-bg p-6 mt-6">
+                <h2 className="text-sm font-semibold text-text-secondary mb-5">Objetivo Principal de Estilo</h2>
+                <Field orientation="vertical">
+                  <FieldContent>
+                    <div className="flex flex-wrap gap-2">
+                      {STYLE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setStyleObjective(styleObjective === opt ? '' : opt)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                            styleObjective === opt
+                              ? 'bg-brand-accent text-background'
+                              : 'bg-white/5 text-text-secondary border border-border hover:border-brand-accent/40'
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                    <FieldDescription>Selecione o seu objetivo principal</FieldDescription>
+                  </FieldContent>
+                </Field>
+              </div>
+            </FadeIn>
 
             {/* Feedback */}
             {error && (
@@ -230,16 +239,18 @@ export default function ProfilePage() {
             )}
 
             {/* Botão salvar */}
-            <div className="flex justify-end mt-6">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-accent text-background font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                {saving ? 'Salvando...' : 'Salvar Perfil'}
-              </button>
-            </div>
+            <FadeIn delay={0.4}>
+              <div className="flex justify-end mt-6">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-accent text-background font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {saving ? 'Salvando...' : 'Salvar Perfil'}
+                </button>
+              </div>
+            </FadeIn>
           </form>
         </div>
       </div>
