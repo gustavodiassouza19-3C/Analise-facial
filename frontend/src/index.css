@@ -37,6 +37,10 @@
   --sidebar-ring: 43 75% 52%;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
   overflow-x: hidden;
 }

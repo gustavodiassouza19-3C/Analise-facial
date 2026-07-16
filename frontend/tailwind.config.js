@@ -9,7 +9,7 @@ export default {
   			'card-bg': '#141414',
   			'chart-track': '#1a1a1a',
   			surface: 'rgba(10, 10, 10, 0.8)',
-  			border: 'rgba(211, 171, 57, 0.15)',
+  			border: 'rgba(211, 171, 57, 0.08)',
   			brand: {
   				primary: '#0a0a0a',
   				secondary: '#303030',

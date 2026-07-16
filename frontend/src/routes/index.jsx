@@ -1,4 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation, Outlet } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import FaceAnalyzer from '@/components/evaluation/FaceAnalyzer';
 import ResultsPage from '@/pages/ResultsPage';
@@ -11,49 +13,71 @@ import ProgressPage from '@/pages/ProgressPage';
 import EvaluationDetailPage from '@/pages/EvaluationDetailPage';
 import ProfilePage from '@/pages/ProfilePage';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
+function Layout() {
+  return (
+    <>
+      <ScrollToTop />
+      <Outlet />
+    </>
+  );
+}
+
 const router = createBrowserRouter([
   {
-    path: '/',
-    element: <LandingPage />,
-  },
-  {
-    path: '/login',
-    element: <LoginPage />,
-  },
-  {
-    path: '/signup',
-    element: <SignupPage />,
-  },
-  {
-    element: <ProtectedRoute />,
+    element: <Layout />,
     children: [
       {
-        path: '/dashboard',
-        element: <FaceAnalyzer />,
+        path: '/',
+        element: <LandingPage />,
       },
       {
-        path: '/dashboard/results',
-        element: <ResultsPage />,
+        path: '/login',
+        element: <LoginPage />,
       },
       {
-        path: '/dashboard/admin',
-        element: <AdminQueuePage />,
+        path: '/signup',
+        element: <SignupPage />,
       },
       {
-        path: '/dashboard/admin/evaluate/:id',
-        element: <AdminEvaluatePage />,
-      },
-      {
-        path: '/dashboard/progress',
-        element: <ProgressPage />,
-      },
-      {
-        path: '/dashboard/evaluation/:id',
-        element: <EvaluationDetailPage />,
-      },
-      {
-        path: '/dashboard/profile',
-        element: <ProfilePage />,
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: '/dashboard',
+            element: <FaceAnalyzer />,
+          },
+          {
+            path: '/dashboard/results',
+            element: <ResultsPage />,
+          },
+          {
+            path: '/dashboard/admin',
+            element: <AdminQueuePage />,
+          },
+          {
+            path: '/dashboard/admin/evaluate/:id',
+            element: <AdminEvaluatePage />,
+          },
+          {
+            path: '/dashboard/progress',
+            element: <ProgressPage />,
+          },
+          {
+            path: '/dashboard/evaluation/:id',
+            element: <EvaluationDetailPage />,
+          },
+          {
+            path: '/dashboard/profile',
+            element: <ProfilePage />,
+          },
+        ],
       },
     ],
   },

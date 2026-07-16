@@ -78,13 +78,17 @@ const easeOutExpo = [0.16, 1, 0.3, 1];
 function FeatureCard({ feature, index }) {
   const prefersReduced = useReducedMotion();
   const hue = (h) => `hsl(${h}, 100%, 50%)`;
+  const isEven = index % 2 === 0;
+
+  const isLeft = index === 0 || index === 2;
+  const isRight = index === 1 || index === 3;
 
   return (
     <motion.div
-      className="flex justify-center items-center relative py-10"
+      className={`flex items-center relative py-10 ${isLeft ? 'justify-start pl-8' : isRight ? 'justify-end pr-8' : 'justify-center'}`}
       style={{ marginBottom: index < features.length - 1 ? '-60px' : '0' }}
-      initial={prefersReduced ? false : { opacity: 0, y: 80, rotate: 6 }}
-      whileInView={{ opacity: 1, y: 40, rotate: -6 }}
+      initial={prefersReduced ? false : { opacity: 0, y: 80, rotate: isEven ? 6 : -6 }}
+      whileInView={{ opacity: 1, y: 40, rotate: isEven ? -6 : 6 }}
       viewport={{ once: true, amount: 0.6 }}
       transition={{
         type: "spring",
@@ -93,17 +97,21 @@ function FeatureCard({ feature, index }) {
         mass: 0.8,
       }}
     >
-      {/* Gradient splash */}
-      <div
-        className="absolute -inset-4 opacity-70 pointer-events-none"
-        style={{
-          background: `linear-gradient(306deg, ${hue(feature.hueA)}, ${hue(feature.hueB)})`,
-          clipPath: `path("M 0 303.5 C 0 292.454 8.995 285.101 20 283.5 L 460 219.5 C 470.085 218.033 480 228.454 480 239.5 L 500 430 C 500 441.046 491.046 450 480 450 L 20 450 C 8.954 450 0 441.046 0 430 Z")`,
-        }}
-      />
+      {/* Card + splash wrapper */}
+      <div className="relative">
+        {/* Gradient splash */}
+        <div
+          className="absolute -inset-6 opacity-100 pointer-events-none"
+          style={{
+            background: `linear-gradient(${isEven ? 306 : 54}deg, ${hue(feature.hueA)}, ${hue(feature.hueB)})`,
+            clipPath: `path("M 0 303.5 C 0 292.454 8.995 285.101 20 283.5 L 460 219.5 C 470.085 218.033 480 228.454 480 239.5 L 500 430 C 500 441.046 491.046 450 480 450 L 20 450 C 8.954 450 0 441.046 0 430 Z")`,
+            transform: `scale(1.25) ${isLeft ? 'scaleX(-1)' : ''}`,
+            transformOrigin: 'center',
+          }}
+        />
 
-      {/* Card */}
-      <div className="relative z-10 w-[300px] h-[430px] rounded-2xl bg-card-bg border border-border flex flex-col items-center justify-center gap-4 shadow-2xl overflow-hidden">
+        {/* Card */}
+        <div className="relative z-10 w-[360px] h-[500px] rounded-2xl bg-card-bg border border-border flex flex-col items-center justify-center gap-4 shadow-2xl overflow-hidden">
         <div className="flex flex-col items-center justify-center gap-4 p-6">
           <motion.span
             className="text-brand-accent"
@@ -122,6 +130,7 @@ function FeatureCard({ feature, index }) {
           </p>
         </div>
       </div>
+      </div>
     </motion.div>
   );
 }
@@ -135,17 +144,8 @@ export default function LandingPage() {
   const heroOpacity = useTransform(scrollY, [0, 400], [1, 0.3]);
   const heroScale = useTransform(scrollY, [0, 600], [1, 1.08]);
 
-  // Scroll progress bar
-  const progressWidth = useTransform(scrollY, [0, 800], ["0%", "100%"]);
-
   return (
     <div className="relative min-h-screen w-screen bg-background overflow-x-hidden">
-
-      {/* Scroll progress indicator */}
-      <motion.div
-        className="fixed top-0 left-0 h-[2px] bg-brand-accent z-50 origin-left"
-        style={{ width: progressWidth }}
-      />
 
       {/* Hero Section */}
       <section className="relative h-screen w-full">
