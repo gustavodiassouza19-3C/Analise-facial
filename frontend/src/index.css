@@ -25,13 +25,12 @@
   }
 }
 
-/* MOGGED Design System Sidebar Variables */
 :root {
-  --sidebar-background: 0 0% 4%;
+  --sidebar-background: 0 0% 2%;
   --sidebar-foreground: 0 0% 98%;
   --sidebar-primary: 43 75% 52%;
   --sidebar-primary-foreground: 0 0% 4%;
-  --sidebar-accent: 0 0% 6%;
+  --sidebar-accent: 0 0% 5%;
   --sidebar-accent-foreground: 0 0% 98%;
   --sidebar-border: 43 40% 52%;
   --sidebar-ring: 43 75% 52%;
@@ -41,6 +40,64 @@ html {
   scroll-behavior: smooth;
 }
 
+::selection {
+  background-color: #D4AF37;
+  color: #000000;
+}
+
 html, body {
   overflow-x: hidden;
+  font-family: 'Urbanist', sans-serif;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Autofill dark mode — impede que o navegador pinte inputs de branco */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #0a0a0a inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Select dark mode nativo */
+select {
+  color-scheme: dark;
+}
+
+/* Scrollbar estilizada */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.35);
+}
+
+/* Safe area para devices com notch (iOS) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Padding bottom no dashboard para nao ficar atras da MobileNav */
+@media (max-width: 1023px) {
+  .sidebar-inset > div > div {
+    padding-bottom: 4rem;
+  }
 }
