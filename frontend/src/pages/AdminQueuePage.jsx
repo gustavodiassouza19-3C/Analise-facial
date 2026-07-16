@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardList, Eye, Trash2 } from 'lucide-react';
-import DashboardLayout from '@/components/DashboardLayout';
 import { FadeIn, ScaleIn, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 
 export default function AdminQueuePage() {
@@ -30,8 +29,7 @@ export default function AdminQueuePage() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="flex-1 p-4 md:p-8 md:pl-4">
+    <div className="flex-1 p-4 md:p-8 md:pl-4">
         <div className="max-w-6xl mx-auto">
           <FadeIn>
             <div className="flex items-center justify-between mb-8">
@@ -123,6 +121,5 @@ export default function AdminQueuePage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
   );
 }

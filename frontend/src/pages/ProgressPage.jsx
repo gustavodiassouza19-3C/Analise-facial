@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import DashboardLayout from '@/components/DashboardLayout';
 import { StaggerContainer, StaggerItem, FadeIn, ScaleIn } from '@/components/ui/page-transition';
 
 export default function ProgressPage() {
@@ -39,8 +38,7 @@ export default function ProgressPage() {
     .reverse();
 
   return (
-    <DashboardLayout>
-      <div className="flex-1 p-4 md:p-8 md:pl-4">
+    <div className="flex-1 p-4 md:p-8 md:pl-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <FadeIn>
@@ -271,6 +269,5 @@ export default function ProgressPage() {
           </FadeIn>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

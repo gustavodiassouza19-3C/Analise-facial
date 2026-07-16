@@ -4,7 +4,6 @@ import { ArrowLeft, Save, CheckCircle2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import DashboardLayout from '@/components/DashboardLayout';
 import { FadeIn, ScaleIn, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 
 const CATEGORY_OPTIONS = ['Excelente', 'Bom', 'Regular', 'Ajustável'];
@@ -85,30 +84,25 @@ export default function AdminEvaluatePage() {
 
   if (!entry) {
     return (
-      <DashboardLayout>
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-text-secondary">Análise não encontrada.</p>
-        </div>
-      </DashboardLayout>
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-text-secondary">Análise não encontrada.</p>
+      </div>
     );
   }
 
   if (submitted) {
     return (
-      <DashboardLayout>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <CheckCircle2 className="w-12 h-12 text-green-400" />
-            <p className="text-sm text-green-400 font-medium">Avaliação salva com sucesso!</p>
-          </div>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <CheckCircle2 className="w-12 h-12 text-green-400" />
+          <p className="text-sm text-green-400 font-medium">Avaliação salva com sucesso!</p>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="flex-1 p-4 md:p-8 md:pl-4">
+    <div className="flex-1 p-4 md:p-8 md:pl-4">
         <div className="max-w-6xl mx-auto">
           <FadeIn>
             <div className="flex items-center gap-3 mb-8">
@@ -341,8 +335,7 @@ export default function AdminEvaluatePage() {
             </div>
           </FadeIn>
         </form>
-        </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

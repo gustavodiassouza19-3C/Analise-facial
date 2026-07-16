@@ -5,7 +5,6 @@ import ChartRadialText from '@/components/evaluation/ChartRadialText';
 import RadarAttributes from '@/components/evaluation/RadarAttributes';
 import FacialThirds from '@/components/evaluation/FacialThirds';
 import HighlightBadges from '@/components/evaluation/HighlightBadges';
-import DashboardLayout from '@/components/DashboardLayout';
 import { FadeIn, ScaleIn, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 
 export default function EvaluationDetailPage() {
@@ -21,18 +20,16 @@ export default function EvaluationDetailPage() {
 
   if (!entry || !entry.evaluation) {
     return (
-      <DashboardLayout>
-        <div className="flex-1 flex flex-col items-center justify-center gap-4">
-          <p className="text-sm text-text-secondary">Avaliação não encontrada.</p>
-          <button
-            onClick={() => navigate('/dashboard/progress')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-accent text-background text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </button>
-        </div>
-      </DashboardLayout>
+      <div className="flex-1 flex flex-col items-center justify-center gap-4">
+        <p className="text-sm text-text-secondary">Avaliação não encontrada.</p>
+        <button
+          onClick={() => navigate('/dashboard/progress')}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-accent text-background text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </button>
+      </div>
     );
   }
 
@@ -55,8 +52,7 @@ export default function EvaluationDetailPage() {
   ];
 
   return (
-    <DashboardLayout>
-      <div className="flex-1 p-4 md:p-8 md:pl-4">
+    <div className="flex-1 p-4 md:p-8 md:pl-4">
         <div className="max-w-6xl mx-auto">
           <FadeIn>
             <div className="flex items-center gap-3 mb-8">
@@ -183,6 +179,5 @@ export default function EvaluationDetailPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

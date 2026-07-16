@@ -1,25 +1,27 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { API_BASE } from '@/lib/api';
+import { Loader2 } from 'lucide-react';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Neutro'];
 const STYLE_OPTIONS = [
   'Harmonia Facial',
-  'Simetria e Proporção',
+  'Simetria e Proporcao',
   'Estilo Pessoal',
-  'Pré-Procedure',
+  'Pre-Procedure',
   'Autoconhecimento',
 ];
 
 export default function SignupPage() {
-  const { register, token } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [fullName, setFullName] = useState('');
@@ -39,37 +41,39 @@ export default function SignupPage() {
       const confirmPassword = formData.get('confirm-password');
 
       if (password !== confirmPassword) {
-        setError('As senhas não coincidem');
+        setError('As senhas nao coincidem');
         setLoading(false);
         return;
       }
 
-      const result = await register(email, password);
+      const result = await signUp(email, password, fullName);
 
       if (result.success) {
-        // Save profile data
-        try {
-          await fetch(`${API_BASE}/profile/`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              full_name: fullName || null,
-              gender: gender || null,
-              age: age ? Number(age) : null,
-              style_objective: styleObjective || null,
-            }),
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await supabase.from('profiles').upsert({
+            id: session.user.id,
+            full_name: fullName,
+            gender: gender || '',
+            age: age ? Number(age) : null,
+            style_objective: styleObjective || '',
           });
-        } catch {
-          // Profile save failed, but account was created
+
+          const selectedPlan = localStorage.getItem('selected_plan');
+          if (selectedPlan) {
+            navigate('/checkout-simulation');
+          } else {
+            navigate('/dashboard');
+          }
+        } else {
+          // Email confirmation required — don't navigate, show message
+          setSuccessMessage(result.message || 'Conta criada! Verifique seu email para ativar.');
         }
-        navigate('/dashboard');
       } else {
         setError(result.error);
       }
-    } catch (err) {
+    } catch {
       setError('Ocorreu um erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);
@@ -77,22 +81,27 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+      <div className="w-full max-w-sm">
         <Card className="overflow-hidden bg-card-bg border-border">
-          <CardContent className="p-6 md:p-8">
-            <form className="flex flex-col gap-5" onSubmit={handleSignup}>
+          <CardContent className="p-5 sm:p-8">
+            <form className="flex flex-col gap-4" onSubmit={handleSignup}>
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold text-text-primary">Criar conta</h1>
-                <p className="text-balance text-text-secondary">Preencha os dados para começar</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Criar conta</h1>
+                <p className="text-sm text-text-secondary mt-1">Preencha os dados para comecar</p>
               </div>
               {error && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                   {error}
                 </div>
               )}
+              {successMessage && (
+                <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm text-center">
+                  {successMessage}
+                </div>
+              )}
               <div className="grid gap-2">
-                <Label htmlFor="full-name" className="text-text-secondary">Nome Completo</Label>
+                <Label htmlFor="full-name" className="text-text-secondary text-sm">Nome Completo</Label>
                 <Input
                   id="full-name"
                   name="full-name"
@@ -100,34 +109,31 @@ export default function SignupPage() {
                   placeholder="Seu nome completo"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="bg-background border-border text-text-primary placeholder:text-text-muted"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email" className="text-text-secondary">Email</Label>
+                <Label htmlFor="email" className="text-text-secondary text-sm">Email</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   placeholder="seu@email.com"
                   required
-                  className="bg-background border-border text-text-primary placeholder:text-text-muted"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="password" className="text-text-secondary">Senha</Label>
+                <Label htmlFor="password" className="text-text-secondary text-sm">Senha</Label>
                 <Input
                   id="password"
                   name="password"
                   type="password"
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Minimo 8 caracteres"
                   required
                   minLength={8}
-                  className="bg-background border-border text-text-primary"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="confirm-password" className="text-text-secondary">Confirmar senha</Label>
+                <Label htmlFor="confirm-password" className="text-text-secondary text-sm">Confirmar senha</Label>
                 <Input
                   id="confirm-password"
                   name="confirm-password"
@@ -135,11 +141,10 @@ export default function SignupPage() {
                   placeholder="Repita a senha"
                   required
                   minLength={8}
-                  className="bg-background border-border text-text-primary"
                 />
               </div>
               <div className="grid gap-2">
-                <Label className="text-text-secondary">Idade</Label>
+                <Label className="text-text-secondary text-sm">Idade</Label>
                 <Input
                   type="number"
                   min="1"
@@ -147,24 +152,23 @@ export default function SignupPage() {
                   placeholder="Ex: 28"
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
-                  className="bg-background border-border text-text-primary"
                 />
               </div>
               <div className="grid gap-2">
-                <Label className="text-text-secondary">Gênero</Label>
+                <Label className="text-text-secondary text-sm">Genero</Label>
                 <select
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
+                  className="flex h-10 w-full rounded-xl border border-neutral-800 bg-[#0a0a0a] px-4 py-2.5 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/40 focus-visible:border-brand-accent/30 transition-colors appearance-none"
                 >
-                  <option value="">Selecione</option>
+                  <option value="" className="bg-[#0a0a0a] text-neutral-400">Selecione</option>
                   {GENDER_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option key={opt} value={opt} className="bg-[#0a0a0a] text-white">{opt}</option>
                   ))}
                 </select>
               </div>
               <div className="grid gap-2">
-                <Label className="text-text-secondary">Objetivo de Estilo</Label>
+                <Label className="text-text-secondary text-sm">Objetivo de Estilo</Label>
                 <div className="flex flex-wrap gap-2">
                   {STYLE_OPTIONS.map((opt) => (
                     <button
@@ -174,7 +178,7 @@ export default function SignupPage() {
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         styleObjective === opt
                           ? 'bg-brand-accent text-background'
-                          : 'bg-white/5 text-text-secondary border border-border hover:border-brand-accent/40'
+                          : 'bg-white/5 text-text-secondary border border-neutral-800 hover:border-brand-accent/40'
                       }`}
                     >
                       {opt}
@@ -185,12 +189,17 @@ export default function SignupPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-brand-accent text-background font-semibold hover:opacity-90"
+                className="w-full h-11 bg-brand-accent text-background font-semibold hover:opacity-90 rounded-xl"
               >
-                {loading ? 'Criando conta...' : 'Criar conta'}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Criando conta...
+                  </span>
+                ) : 'Criar conta'}
               </Button>
               <div className="text-center text-sm text-text-secondary">
-                Já tem uma conta?{' '}
+                Ja tem uma conta?{' '}
                 <Link to="/login" className="underline underline-offset-4 text-brand-accent hover:text-brand-accent/80">
                   Entrar
                 </Link>

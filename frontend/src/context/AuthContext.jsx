@@ -1,76 +1,141 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import { API_BASE } from '@/lib/api';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
-  const login = useCallback(async (email, password) => {
+  const fetchProfile = useCallback(async (userId) => {
     try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        return { success: false, error: error.detail || 'Erro ao fazer login' };
+      if (error) {
+        console.error('Failed to fetch profile:', error.message);
+        setProfile(null);
+        return;
       }
-
-      const data = await response.json();
-      localStorage.setItem('token', data.access_token);
-      localStorage.setItem('user', JSON.stringify({ email }));
-      setToken(data.access_token);
-      setUser({ email });
-      setIsAuthenticated(true);
-      return { success: true };
+      setProfile(data);
     } catch (err) {
-      return { success: false, error: 'Não foi possível conectar ao servidor. Tente novamente.' };
+      console.error('Profile fetch error:', err);
+      setProfile(null);
     }
-  }, []);
+  }, [supabase]);
 
-  const register = useCallback(async (email, password) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+  useEffect(() => {
+    let mounted = true;
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        return { success: false, error: error.detail || 'Erro ao criar conta' };
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      if (session?.user) {
+        setUser(session.user);
+        setToken(session.access_token);
+        fetchProfile(session.user.id);
+      } else {
+        setUser(null);
+        setToken(null);
       }
+      setLoading(false);
+    });
 
-      const data = await response.json();
-      localStorage.setItem('token', data.access_token);
-      localStorage.setItem('user', JSON.stringify({ email }));
-      setToken(data.access_token);
-      setUser({ email });
-      setIsAuthenticated(true);
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: 'Não foi possível conectar ao servidor. Tente novamente.' };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!mounted) return;
+        if (session?.user) {
+          setUser(session.user);
+          setToken(session.access_token);
+          fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
+          setToken(null);
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
+
+  const signUp = useCallback(async (email, password, fullName) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName },
+      },
+    });
+
+    if (error) {
+      const message = mapAuthError(error.message);
+      return { success: false, error: message };
     }
-  }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
+    if (data.user && !data.session) {
+      return { success: true, message: 'Confirme seu email para ativar a conta.' };
+    }
+
+    return { success: true };
+  }, [supabase]);
+
+  const signIn = useCallback(async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      const message = mapAuthError(error.message);
+      return { success: false, error: message };
+    }
+
+    return { success: true };
+  }, [supabase]);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    setIsAuthenticated(false);
-  }, []);
+    setProfile(null);
+    setToken(null);
+  }, [supabase]);
+
+  const mergedUser = user && profile
+    ? {
+        id: user.id,
+        email: user.email,
+        full_name: profile.full_name,
+        role: profile.role,
+        plan_type: profile.plan,
+        subscription_status: profile.status,
+      }
+    : user
+      ? { id: user.id, email: user.email }
+      : null;
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated: !!user,
+        user: mergedUser,
+        token,
+        loading,
+        signUp,
+        signIn,
+        signOut,
+        login: signIn,
+        register: signUp,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -82,4 +147,15 @@ export function useAuth() {
     throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
+}
+
+function mapAuthError(message) {
+  const map = {
+    'Invalid login credentials': 'Email ou senha incorretos.',
+    'User already registered': 'Este email já está cadastrado.',
+    'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres.',
+    'Unable to validate email address: invalid format': 'Formato de email inválido.',
+    'Email not confirmed': 'Email ainda não confirmado. Verifique sua caixa de entrada.',
+  };
+  return map[message] || message;
 }

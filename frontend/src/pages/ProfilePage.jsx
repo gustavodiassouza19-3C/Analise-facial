@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Camera, Save, CheckCircle2, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Field, FieldLabel, FieldContent, FieldDescription, FieldGroup } from '@/components/ui/field';
-import DashboardLayout from '@/components/DashboardLayout';
 import { FadeIn, ScaleIn, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { API_BASE } from '@/lib/api';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Neutro'];
 const STYLE_OPTIONS = [
@@ -17,7 +16,7 @@ const STYLE_OPTIONS = [
 ];
 
 export default function ProfilePage() {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const fileInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
@@ -32,13 +31,22 @@ export default function ProfilePage() {
   const [profilePicture, setProfilePicture] = useState(null);
 
   useEffect(() => {
+    if (!user?.id) return;
+
     async function fetchProfile() {
       try {
-        const res = await fetch(`${API_BASE}/profile/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Erro ao carregar perfil');
-        const data = await res.json();
+        const supabase = createClient();
+        const { data, error: fetchError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (fetchError) {
+          setError('Erro ao carregar perfil.');
+          return;
+        }
+
         setFullName(data.full_name || '');
         setGender(data.gender || '');
         setAge(data.age?.toString() || '');
@@ -51,7 +59,7 @@ export default function ProfilePage() {
       }
     }
     fetchProfile();
-  }, [token]);
+  }, [user?.id]);
 
   function handlePhotoUpload(file) {
     if (!file) return;
@@ -62,26 +70,25 @@ export default function ProfilePage() {
 
   async function handleSave(e) {
     e.preventDefault();
+    if (!user?.id) return;
     setSaving(true);
     setError(null);
     setSaved(false);
 
     try {
-      const res = await fetch(`${API_BASE}/profile/`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const supabase = createClient();
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
           full_name: fullName || null,
           gender: gender || null,
           age: age ? Number(age) : null,
           style_objective: styleObjective || null,
           profile_picture: profilePicture || null,
-        }),
-      });
-      if (!res.ok) throw new Error('Erro ao salvar perfil');
+        });
+
+      if (updateError) throw new Error(updateError.message);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (e) {
@@ -93,17 +100,14 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-text-secondary">Carregando perfil...</p>
-        </div>
-      </DashboardLayout>
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-sm text-text-secondary">Carregando perfil...</p>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="flex-1 p-4 md:p-8 md:pl-4">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 md:pl-4">
         <div className="max-w-3xl mx-auto">
           <FadeIn>
             <h1 className="text-lg font-bold tracking-tight text-text-primary mb-8">Meu Perfil</h1>
@@ -144,8 +148,8 @@ export default function ProfilePage() {
 
             {/* Dados pessoais */}
             <FadeIn delay={0.2}>
-              <div className="rounded-2xl border border-border bg-card-bg p-6 mt-8">
-                <h2 className="text-sm font-semibold text-text-secondary mb-5">Dados Pessoais</h2>
+              <div className="rounded-2xl border border-border bg-card-bg p-4 sm:p-6 mt-6 sm:mt-8">
+                <h2 className="text-sm font-semibold text-text-secondary mb-4 sm:mb-5">Dados Pessoais</h2>
                 <FieldGroup>
                   <Field orientation="vertical">
                     <FieldContent>
@@ -180,11 +184,11 @@ export default function ProfilePage() {
                         <select
                           value={gender}
                           onChange={(e) => setGender(e.target.value)}
-                          className="flex h-10 w-full rounded-md border border-border bg-card-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          className="flex h-10 w-full rounded-xl border border-neutral-800 bg-[#0a0a0a] px-4 py-2.5 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/40 focus-visible:border-brand-accent/30 transition-colors appearance-none"
                         >
-                          <option value="">Selecione</option>
+                          <option value="" className="bg-[#0a0a0a] text-neutral-400">Selecione</option>
                           {GENDER_OPTIONS.map((opt) => (
-                            <option key={opt} value={opt}>{opt}</option>
+                            <option key={opt} value={opt} className="bg-[#0a0a0a] text-white">{opt}</option>
                           ))}
                         </select>
                       </FieldContent>
@@ -196,8 +200,8 @@ export default function ProfilePage() {
 
             {/* Objetivo de estilo */}
             <FadeIn delay={0.3}>
-              <div className="rounded-2xl border border-border bg-card-bg p-6 mt-6">
-                <h2 className="text-sm font-semibold text-text-secondary mb-5">Objetivo Principal de Estilo</h2>
+              <div className="rounded-2xl border border-border bg-card-bg p-4 sm:p-6 mt-5 sm:mt-6">
+                <h2 className="text-sm font-semibold text-text-secondary mb-4 sm:mb-5">Objetivo Principal de Estilo</h2>
                 <Field orientation="vertical">
                   <FieldContent>
                     <div className="flex flex-wrap gap-2">
@@ -241,7 +245,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-accent text-background font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-brand-accent text-background font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Salvando...' : 'Salvar Perfil'}
@@ -251,6 +255,5 @@ export default function ProfilePage() {
           </form>
         </div>
       </div>
-    </DashboardLayout>
   );
 }
