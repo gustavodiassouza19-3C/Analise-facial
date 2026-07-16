@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { ScanFace, BarChart3, Lightbulb, ShieldCheck } from 'lucide-react';
+import { FaInstagram, FaTwitter, FaLinkedin, FaGithub } from 'react-icons/fa';
 import GradientText from '@/components/ui/GradientText';
 import CardNav from '@/components/ui/CardNav';
 import GlassSurface from '@/components/ui/GlassSurface';
@@ -120,12 +121,12 @@ function FeatureCard({ feature, index }) {
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.15 }}
           >
-            <feature.icon className="w-16 h-16" strokeWidth={1.5} />
+            <feature.icon className="w-20 h-20" strokeWidth={1.5} />
           </motion.span>
-          <h3 className="text-lg font-bold text-text-primary text-center">
+          <h3 className="text-xl font-bold text-text-primary text-center">
             {feature.title}
           </h3>
-          <p className="text-sm text-text-secondary text-center leading-relaxed">
+          <p className="text-base text-text-secondary text-center leading-relaxed">
             {feature.description}
           </p>
         </div>
@@ -303,6 +304,33 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="relative z-20 w-full bg-card-bg text-center flex flex-col items-center gap-4 py-10">
+        <div className="flex gap-3">
+          {[FaInstagram, FaTwitter, FaLinkedin, FaGithub].map((Icon, i) => (
+            <a
+              key={i}
+              href="#"
+              className="w-10 h-10 flex items-center justify-center rounded-lg border border-border text-text-secondary hover:text-brand-accent hover:border-brand-accent/40 transition-colors"
+            >
+              <Icon className="w-5 h-5" />
+            </a>
+          ))}
+        </div>
+
+        <div className="w-12 h-[2px] bg-border my-2" />
+
+        <p className="text-text-secondary text-sm font-normal max-w-md leading-relaxed">
+          Análise facial inteligente com IA avançada. Mapeamos mais de 468 pontos faciais para revelar o seu potencial visual único.
+        </p>
+
+        <div className="w-full h-[1px] bg-border my-2" />
+
+        <div className="text-text-muted text-sm">
+          {new Date().getFullYear()} — <strong className="text-text-primary">FaceMax</strong>
+        </div>
+      </footer>
     </div>
   );
 }
