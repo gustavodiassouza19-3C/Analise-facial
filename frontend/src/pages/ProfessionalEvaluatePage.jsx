@@ -330,7 +330,7 @@ export default function ProfessionalEvaluatePage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="space-y-6">
             {/* Photos + Client Info */}
             <FadeIn>

@@ -8,7 +8,7 @@ export default function DashboardLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="bg-background font-noto-sans">
+      <SidebarInset className="bg-background font-noto-sans overflow-y-auto">
         <PageTransition>
           <Outlet />
         </PageTransition>

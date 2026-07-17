@@ -189,7 +189,7 @@ export default function FaceAnalyzer() {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-6 md:p-8 md:pl-4">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 md:pl-4 pb-24 sm:pb-6 md:pb-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
