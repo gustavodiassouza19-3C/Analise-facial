@@ -1,4 +1,4 @@
-# Análise Facial Backend
+# Analise Facial Backend
 
 # Core web framework
 fastapi>=0.110.0
@@ -19,6 +19,9 @@ python-jose[cryptography]>=3.3.0
 bcrypt>=4.0,<5.0
 cryptography>=49.0.0
 
+# Rate limiting
+slowapi>=0.1.9
+
 # File upload
 python-multipart>=0.0.18
 
@@ -26,6 +29,10 @@ python-multipart>=0.0.18
 opencv-python-headless>=4.11.0
 mediapipe>=0.10.35
 numpy>=1.26.4
+Pillow>=10.0.0
+
+# PostgreSQL async driver (production)
+asyncpg>=0.29.0
 
 # HTTP client / AI (OpenRouter)
 httpx>=0.28.0

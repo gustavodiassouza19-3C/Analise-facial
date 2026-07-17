@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import secrets
 import warnings
 
 
@@ -10,7 +11,7 @@ class Settings(BaseSettings):
     )
 
     # App
-    PROJECT_NAME: str = "Análise Facial API"
+    PROJECT_NAME: str = "Analise Facial API"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
 
@@ -24,6 +25,10 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./facial_analysis.db"
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_TIMEOUT: int = 30
+    DB_POOL_RECYCLE: int = 1800
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -33,23 +38,33 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Rate Limiting
+    RATE_LIMIT_AUTH: str = "5/minute"
+    RATE_LIMIT_ANALYSIS: str = "10/hour"
+    RATE_LIMIT_GENERAL: str = "60/minute"
+
     # MediaPipe (face detection only)
     MIN_DETECTION_CONFIDENCE: float = 0.5
     MIN_TRACKING_CONFIDENCE: float = 0.5
 
-    # OpenRouter API (replaces direct Gemini)
+    # OpenRouter API
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_MODEL: str = "google/gemma-4-26b-a4b-it:free"
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_TIMEOUT: int = 30
+    OPENROUTER_REFERER: str = "https://facemax.app"
+
+    # Request limits
+    MAX_IMAGE_BASE64_SIZE_MB: int = 10
 
 
 settings = Settings()
 
-# Warn if using default secret key in production
+# CRITICAL: Refuse to start with insecure secret key in production
 _insecure_keys = {"your-secret-key-change-in-production", "dev-secret-key-change-in-production"}
 if settings.SECRET_KEY in _insecure_keys and not settings.DEBUG:
-    warnings.warn(
+    raise RuntimeError(
         "SECRET_KEY is set to an insecure default value. "
-        "Generate a strong secret key for production.",
-        stacklevel=2,
+        "Set a strong SECRET_KEY in your .env file before running in production. "
+        "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
     )

@@ -1,19 +1,41 @@
-from pydantic import BaseModel, EmailStr
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 
 
 class UserBase(BaseModel):
-    email: EmailStr
-    full_name: Optional[str] = None
+    email: EmailStr = Field(..., max_length=255)
+    full_name: Optional[str] = Field(None, max_length=255)
+
+    @field_validator("full_name")
+    @classmethod
+    def sanitize_full_name(cls, v):
+        if v is not None:
+            # Strip potentially dangerous characters
+            v = re.sub(r'[<>"\'`;\\]', '', v)
+            v = v.strip()
+        return v
 
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v):
+        if not any(c.isupper() for c in v):
+            raise ValueError("A senha deve conter pelo menos uma letra maiuscula")
+        if not any(c.islower() for c in v):
+            raise ValueError("A senha deve conter pelo menos uma letra minuscula")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("A senha deve conter pelo menos um numero")
+        return v
 
 
 class UserResponse(UserBase):
     id: str
     is_active: bool
+    role: str = "client"
 
     model_config = {"from_attributes": True}
 

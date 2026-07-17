@@ -2,14 +2,25 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 
+_is_sqlite = "sqlite" in settings.DATABASE_URL
 
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     pool_pre_ping=True,
     **(
+        {
+            "pool_size": settings.DB_POOL_SIZE,
+            "max_overflow": settings.DB_MAX_OVERFLOW,
+            "pool_timeout": settings.DB_POOL_TIMEOUT,
+            "pool_recycle": settings.DB_POOL_RECYCLE,
+        }
+        if not _is_sqlite
+        else {}
+    ),
+    **(
         {"connect_args": {"check_same_thread": False}}
-        if "sqlite" in settings.DATABASE_URL
+        if _is_sqlite
         else {}
     ),
 )

@@ -1,4 +1,5 @@
 import os
+import asyncio
 import base64
 import cv2
 import numpy as np
@@ -19,6 +20,9 @@ _face_landmarker_options = mp.tasks.vision.FaceLandmarkerOptions(
     min_tracking_confidence=0.5,
 )
 _face_landmarker = mp.tasks.vision.FaceLandmarker.create_from_options(_face_landmarker_options)
+
+# Lock to serialize concurrent MediaPipe detect() calls within a single worker
+_face_landmarker_lock = asyncio.Lock()
 
 
 class FaceDetectionService:
@@ -48,7 +52,7 @@ class FaceDetectionService:
                 max_y = py
         return int(min_x), int(min_y), int(max_x - min_x), int(max_y - min_y)
 
-    def detect_and_crop(self, base64_image: str) -> str:
+    async def detect_and_crop(self, base64_image: str) -> str:
         """
         Receives a base64 image, detects the face using MediaPipe FaceLandmarker,
         crops around it with uniform padding, and returns the cropped base64 image.
@@ -72,10 +76,11 @@ class FaceDetectionService:
 
         img_h, img_w = image.shape[:2]
 
-        # Detect face with MediaPipe FaceLandmarker
+        # Detect face with MediaPipe FaceLandmarker (thread-safe via lock)
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-        result = _face_landmarker.detect(mp_image)
+        async with _face_landmarker_lock:
+            result = await asyncio.to_thread(_face_landmarker.detect, mp_image)
 
         if not result.face_landmarks:
             raise ValueError("Nenhum rosto detectado na imagem")

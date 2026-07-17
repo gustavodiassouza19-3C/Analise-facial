@@ -1,12 +1,11 @@
 """
 Geometry Analysis endpoint — coordinate-based facial metrics.
-
-Receives structured (x, y) landmark coordinates and returns
-geometric measurements: facial thirds, nasolabial angle, and
-Ricketts E-line distances.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import logging
+from fastapi import APIRouter, Depends, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.schemas.analysis import (
     GeometryAnalysisInputSchema,
     GeometryAnalysisResponseSchema,
@@ -15,13 +14,18 @@ from app.schemas.analysis import (
 )
 from app.services.geometry_service import GeometryService
 from app.services.face_detection_service import FaceDetectionService
+from app.core.security import get_current_user
+from app.core.config import settings
+from app.core.exceptions import SanitizedHTTPException
+from app.models.user import User
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 def get_geometry_service() -> GeometryService:
-    """Dependency provider for GeometryService."""
     return GeometryService()
 
 
@@ -30,24 +34,16 @@ def get_geometry_service() -> GeometryService:
     response_model=GeometryAnalysisResponseSchema,
     status_code=status.HTTP_200_OK,
     summary="Calculate geometric facial metrics",
-    description=(
-        "Receives anatomical landmark coordinates from front and profile "
-        "views and returns facial thirds percentages, nasolabial angle, "
-        "and Ricketts E-line lip distances."
-    ),
 )
+@limiter.limit(settings.RATE_LIMIT_GENERAL)
 async def calculate_metrics(
+    request,
     data: GeometryAnalysisInputSchema,
+    current_user: User = Depends(get_current_user),
     geometry_service: GeometryService = Depends(get_geometry_service),
 ) -> GeometryAnalysisResponseSchema:
-    """
-    POST /api/v1/analysis/calculate-metrics
-
-    Validates input via Pydantic, delegates to GeometryService,
-    and returns a fully validated response.
-    """
+    """Calculate facial metrics from landmark coordinates. Requires authentication."""
     try:
-        # Convert Pydantic models → plain dicts for the service layer
         trichion = data.trichion.model_dump()
         glabella = data.glabella.model_dump()
         subnasale_front = data.subnasale_front.model_dump()
@@ -58,44 +54,36 @@ async def calculate_metrics(
         labiale_inferius = data.labiale_inferius.model_dump()
         menton_profile = data.menton_profile.model_dump()
 
-        # 1. Facial thirds (front view)
         thirds = await geometry_service.calculate_facial_thirds(
-            trichion=trichion,
-            glabella=glabella,
-            subnasale=subnasale_front,
-            menton=menton_front,
+            trichion=trichion, glabella=glabella,
+            subnasale=subnasale_front, menton=menton_front,
         )
-
-        # 2. Nasolabial angle (profile view)
         nasolabial_angle = await geometry_service.calculate_nasolabial_angle(
-            subnasale=subnasale_profile,
-            pranasale=pranasale,
+            subnasale=subnasale_profile, pranasale=pranasale,
             labiale_superius=labiale_superius,
         )
-
-        # 3. Ricketts E-line (profile view)
         ricketts = await geometry_service.calculate_ricketts_line(
-            pranasale=pranasale,
-            menton=menton_profile,
-            labiale_superius=labiale_superius,
-            labiale_inferius=labiale_inferius,
+            pranasale=pranasale, menton=menton_profile,
+            labiale_superius=labiale_superius, labiale_inferius=labiale_inferius,
         )
 
         return GeometryAnalysisResponseSchema(
-            thirds=thirds,
-            nasolabial_angle=nasolabial_angle,
-            ricketts=ricketts,
+            thirds=thirds, nasolabial_angle=nasolabial_angle, ricketts=ricketts,
         )
-
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Invalid coordinate data: {exc}",
+        raise SanitizedHTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "Dados de coordenadas invalidos.",
+            str(exc),
         )
+    except SanitizedHTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Calculation error: {exc}",
+        logger.exception("Geometry calculation error")
+        raise SanitizedHTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Erro ao calcular metricas geometricas.",
+            str(exc),
         )
 
 
@@ -104,26 +92,30 @@ async def calculate_metrics(
     response_model=FaceDetectResponse,
     status_code=status.HTTP_200_OK,
     summary="Detect face and crop image",
-    description="Receives a base64 image, detects the face, crops around it, and returns the cropped image.",
 )
-async def detect_face(data: FaceDetectSchema) -> FaceDetectResponse:
-    """
-    POST /api/v1/analysis/detect-face
-
-    Detects the face in the image and returns a cropped version
-    centered on the face with uniform padding.
-    """
+@limiter.limit(settings.RATE_LIMIT_GENERAL)
+async def detect_face(
+    request,
+    data: FaceDetectSchema,
+    current_user: User = Depends(get_current_user),
+) -> FaceDetectResponse:
+    """Detect face and crop image. Requires authentication."""
     try:
         service = FaceDetectionService()
-        cropped = service.detect_and_crop(data.image)
+        cropped = await service.detect_and_crop(data.image)
         return FaceDetectResponse(cropped_image=cropped)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(exc),
+        raise SanitizedHTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            str(exc),
+            str(exc),
         )
+    except SanitizedHTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Face detection error: {exc}",
+        logger.exception("Face detection error")
+        raise SanitizedHTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Erro ao detectar rosto na imagem.",
+            str(exc),
         )

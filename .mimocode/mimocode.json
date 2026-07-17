@@ -8,6 +8,10 @@
     "motion-ui": {
       "type": "local",
       "command": ["npx", "@pavui/motion-ui-mcp-server"]
+    },
+    "supabase": {
+      "type": "local",
+      "command": ["npx", "@supabase/mcp-server@latest"]
     }
   }
 }

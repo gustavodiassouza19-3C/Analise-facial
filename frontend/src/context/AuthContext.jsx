@@ -23,6 +23,7 @@ export function AuthProvider({ children }) {
         setProfile(null);
         return;
       }
+      console.log('[AuthContext] Profile loaded:', data);
       setProfile(data);
     } catch (err) {
       console.error('Profile fetch error:', err);
@@ -33,12 +34,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
       if (session?.user) {
         setUser(session.user);
         setToken(session.access_token);
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
       } else {
         setUser(null);
         setToken(null);
@@ -47,12 +48,12 @@ export function AuthProvider({ children }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         if (!mounted) return;
         if (session?.user) {
           setUser(session.user);
           setToken(session.access_token);
-          fetchProfile(session.user.id);
+          await fetchProfile(session.user.id);
         } else {
           setUser(null);
           setProfile(null);
@@ -109,6 +110,8 @@ export function AuthProvider({ children }) {
     setToken(null);
   }, [supabase]);
 
+  console.log('[AuthContext] profile state:', profile);
+
   const mergedUser = user && profile
     ? {
         id: user.id,
@@ -127,6 +130,7 @@ export function AuthProvider({ children }) {
       value={{
         isAuthenticated: !!user,
         user: mergedUser,
+        profile,
         token,
         loading,
         signUp,
@@ -134,6 +138,7 @@ export function AuthProvider({ children }) {
         signOut,
         login: signIn,
         register: signUp,
+        refreshProfile: fetchProfile,
       }}
     >
       {children}
