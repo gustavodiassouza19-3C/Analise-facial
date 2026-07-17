@@ -1,0 +1,58 @@
+# ============================================================
+# .dockerignore - FaceMax Backend
+# ============================================================
+
+# Dependencias Python (serao instaladas no container)
+.venv
+__pycache__
+*.pyc
+*.pyo
+
+# Build anterior
+dist
+build
+*.egg-info
+
+# Git
+.git
+.gitignore
+
+# Variaveis de ambiente (injetadas via docker-compose)
+.env
+.env.*
+
+# IDE
+.vscode
+.idea
+*.swp
+*~
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Base de dados local (usar PostgreSQL no container)
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentacao
+README.md
+LICENSE
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Testes
+tests/
+test_*.py
+.coverage
+.pytest_cache
+
+# Alembic (migrations serao rodadas pelo container)
+alembic/versions/
+
+# MimoCode
+.mimocode

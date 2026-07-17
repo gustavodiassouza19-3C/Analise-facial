@@ -13,9 +13,9 @@ dist-ssr
 .git
 .gitignore
 
-# Variaveis de ambiente locais (.env e necessario para o build Vite)
-!.env
-!.env.*
+# Variaveis de ambiente (injetadas via --build-arg, nao precisam estar no container)
+.env
+.env.*
 
 # Editor / IDE
 .vscode

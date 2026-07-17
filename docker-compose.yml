@@ -1,0 +1,124 @@
+# ============================================================
+# Docker Compose - FaceMax (Producao)
+# ============================================================
+# Servicos: Frontend (Nginx) + Backend (FastAPI) + PostgreSQL + Redis
+#
+# Uso:
+#   1. Copie .env.production.example para .env.production
+#   2. Preencha as variaveis de ambiente
+#   3. Execute: docker compose --env-file .env.production up -d --build
+#
+# Logs:
+#   docker compose logs -f
+#
+# Parar:
+#   docker compose down
+# ============================================================
+
+services:
+  # --- PostgreSQL (banco de dados) ---
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-facemax}
+      POSTGRES_USER: ${POSTGRES_USER:-facemax}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env.production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-facemax} -d ${POSTGRES_DB:-facemax}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - facemax
+
+  # --- Redis (rate limiting + cache) ---
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - facemax
+
+  # --- Backend (FastAPI + Uvicorn) ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DEBUG: "false"
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-facemax}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-facemax}
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:?Defina SECRET_KEY no .env.production}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      BACKEND_CORS_ORIGINS: '["${FRONTEND_URL:-http://localhost:3000}"]'
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?Defina OPENROUTER_API_KEY no .env.production}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-google/gemma-4-26b-a4b-it:free}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENROUTER_TIMEOUT: "30"
+      OPENROUTER_REFERER: ${OPENROUTER_REFERER:-https://facemax.app}
+      RATE_LIMIT_AUTH: "5/minute"
+      RATE_LIMIT_ANALYSIS: "10/hour"
+      RATE_LIMIT_GENERAL: "60/minute"
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - facemax
+
+  # --- Frontend (Nginx + React SPA) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?Defina VITE_SUPABASE_URL no .env.production}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?Defina VITE_SUPABASE_ANON_KEY no .env.production}
+        VITE_API_URL: ${VITE_API_URL:-/api/v1}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - facemax
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  facemax:
+    driver: bridge
