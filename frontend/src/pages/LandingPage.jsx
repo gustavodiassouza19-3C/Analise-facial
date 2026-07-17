@@ -9,6 +9,7 @@ import CardNav from '@/components/ui/CardNav';
 import GlassSurface from '@/components/ui/GlassSurface';
 import logo from '@/assets/logo.png';
 import heroBg from '@/assets/background_ladinpage.png';
+import heroMobileBg from '@/assets/hero-mobile.jpg';
 import {
   ScrollFadeUp,
   ScrollStaggerContainer,
@@ -110,8 +111,8 @@ function FeatureCard({ feature, index }) {
 
   return (
     <motion.div
-      className={`flex items-center relative py-10 ${isLeft ? 'justify-start pl-8' : isRight ? 'justify-end pr-8' : 'justify-center'}`}
-      style={{ marginBottom: index < features.length - 1 ? '-60px' : '0' }}
+      className={`flex items-center relative py-8 ${isLeft ? 'justify-start pl-8' : isRight ? 'justify-end pr-8' : 'justify-center'}`}
+      style={{ marginBottom: index < features.length - 1 ? '-28px' : '0' }}
       initial={prefersReduced ? false : { opacity: 0, y: 80, rotate: isEven ? 6 : -6 }}
       whileInView={{ opacity: 1, y: 40, rotate: isEven ? -6 : 6 }}
       viewport={{ once: true, amount: 0.6 }}
@@ -127,8 +128,8 @@ function FeatureCard({ feature, index }) {
             transformOrigin: 'center',
           }}
         />
-        <div className="relative z-10 w-[324px] h-[450px] rounded-2xl bg-card-bg border border-border flex flex-col items-center justify-center gap-4 shadow-2xl overflow-hidden">
-          <div className="flex flex-col items-center justify-center gap-4 p-6">
+        <div className="relative z-10 w-[200px] h-[274px] rounded-2xl bg-card-bg border border-border flex flex-col items-center justify-center gap-2 shadow-2xl overflow-hidden">
+          <div className="flex flex-col items-center justify-center gap-2 p-3.5">
             <motion.span
               className="text-brand-accent"
               initial={prefersReduced ? false : { scale: 0.5, opacity: 0 }}
@@ -136,10 +137,10 @@ function FeatureCard({ feature, index }) {
               viewport={{ once: true }}
               transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.15 }}
             >
-              <feature.icon className="w-[72px] h-[72px]" strokeWidth={1.5} />
+              <feature.icon className="w-[40px] h-[40px]" strokeWidth={1.5} />
             </motion.span>
-            <h3 className="text-xl font-bold text-text-primary text-center font-montenegrin">{feature.title}</h3>
-            <p className="text-base text-text-secondary text-center leading-relaxed">{feature.description}</p>
+            <h3 className="text-[15px] font-bold text-text-primary text-center font-montenegrin">{feature.title}</h3>
+            <p className="text-[11px] text-text-secondary text-center leading-relaxed">{feature.description}</p>
           </div>
         </div>
       </div>
@@ -184,7 +185,8 @@ export default function LandingPage() {
           className="absolute inset-0 w-full h-full z-0"
           style={{ y: heroBgY, opacity: heroOpacity, scale: heroScale }}
         >
-          <img src={heroBg} alt="Background" className="w-full h-full object-cover" />
+          <img src={heroBg} alt="Background" className="w-full h-full object-cover hidden md:block" />
+          <img src={heroMobileBg} alt="Background" className="w-full h-full object-cover md:hidden" />
           <div className="absolute inset-0 bg-background/50" />
         </motion.div>
 
@@ -214,22 +216,22 @@ export default function LandingPage() {
             A melhor IA brasileira de avaliação facial trabalhando em conjunto com o olhar clínico de profissionais reais. Resultados que transformam vidas.
           </motion.p>
 
-          <motion.div className="mt-6 px-6 py-3 rounded-full border border-brand-accent/30 bg-brand-accent/5" initial={prefersReduced ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: easeOutExpo, delay: 0.5 }}>
-            <span className="text-brand-accent text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-2">
-              <Crown className="w-4 h-4" />
-              O Único Site de Looksmaxxing que Cobra em Reais. Sem taxas abusivas de câmbio, sem IOF.
+          <motion.div className="mt-6 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border border-brand-accent/30 bg-brand-accent/5 max-w-full overflow-hidden" initial={prefersReduced ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: easeOutExpo, delay: 0.5 }}>
+            <span className="text-brand-accent text-[10px] sm:text-xs font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase flex items-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis">
+              <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">O Único Site de Looksmaxxing que Cobra em Reais. Sem taxas abusivas de câmbio, sem IOF.</span>
             </span>
           </motion.div>
 
-          <div className="flex gap-4 mt-10">
+          <div className="flex flex-nowrap gap-3 sm:gap-4 mt-10">
             <motion.div initial={prefersReduced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6, ease: easeOutExpo }}>
-              <Link to="/login" className="inline-flex items-center justify-center px-8 h-[48px] rounded-xl bg-brand-accent text-background font-bold text-sm hover:opacity-90 transition-all duration-300 shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:shadow-[0_0_50px_rgba(212,175,55,0.5)]">
+              <Link to="/login" className="inline-flex items-center justify-center px-5 sm:px-8 h-[44px] sm:h-[48px] rounded-xl bg-brand-accent text-background font-bold text-xs sm:text-sm whitespace-nowrap hover:opacity-90 transition-all duration-300 shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:shadow-[0_0_50px_rgba(212,175,55,0.5)]">
                 Começar Agora — É Grátis
               </Link>
             </motion.div>
             <motion.div initial={prefersReduced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.6, ease: easeOutExpo }}>
-              <GlassSurface width={180} height={48} borderRadius={12} backgroundOpacity={0.15} blur={10} saturation={1.3} brightness={50} displace={0.3}>
-                <a href="#como-funciona" className="inline-flex items-center justify-center w-full h-full text-white font-medium text-sm text-center">
+              <GlassSurface width={160} height={44} borderRadius={12} backgroundOpacity={0.15} blur={10} saturation={1.3} brightness={50} displace={0.3}>
+                <a href="#como-funciona" className="inline-flex items-center justify-center w-full h-full text-white font-medium text-xs sm:text-sm text-center whitespace-nowrap">
                   Como Funciona
                 </a>
               </GlassSurface>
