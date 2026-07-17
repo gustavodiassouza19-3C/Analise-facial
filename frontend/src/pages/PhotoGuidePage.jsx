@@ -1,4 +1,4 @@
-import { Camera, CheckCircle, XCircle, AlertTriangle, Lightbulb, Sun, Eye } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, AlertTriangle, Lightbulb, Sun, Eye, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 
@@ -155,6 +155,83 @@ export default function PhotoGuidePage() {
                 </div>
               </CardContent>
             </Card>
+          </FadeIn>
+
+          {/* Body Photo Guide */}
+          <FadeIn delay={0.5}>
+            <div className="mt-10">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="w-5 h-5 text-brand-accent" />
+                <h2 className="text-base font-bold text-text-primary">Foto do Físico (Opcional)</h2>
+                <span className="text-[10px] text-text-muted bg-white/5 px-2 py-0.5 rounded-full">Opcional</span>
+              </div>
+              <p className="text-text-secondary text-sm mb-6 max-w-xl">
+                Esta foto permite ao especialista avaliar sua postura, proporção corporal e simetria. Não é obrigatória, mas melhora significativamente a qualidade da avaliação.
+              </p>
+
+              <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <StaggerItem>
+                  <Card className="bg-card-bg border-border h-full">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                          <Camera className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-text-primary mb-1">Corpo Inteiro de Frente</h3>
+                          <p className="text-xs text-text-secondary leading-relaxed">Posicione-se a pelo menos 2 metros da câmera. O corpo inteiro deve estar visível, dos pés à cabeça.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </StaggerItem>
+                <StaggerItem>
+                  <Card className="bg-card-bg border-border h-full">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                          <Sun className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-text-primary mb-1">Postura Natural</h3>
+                          <p className="text-xs text-text-secondary leading-relaxed">Fique em pé com postura relaxada, braços ao lado do corpo. Evite encolher os ombros ou empinar.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </StaggerItem>
+                <StaggerItem>
+                  <Card className="bg-card-bg border-border h-full">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                          <Eye className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-text-primary mb-1">Roupa Ajustada</h3>
+                          <p className="text-xs text-text-secondary leading-relaxed">Use uma camiseta ou regata que marque o contorno do corpo. Isso ajuda a avaliar a definição muscular e proporção.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </StaggerItem>
+                <StaggerItem>
+                  <Card className="bg-card-bg border-border h-full">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                          <XCircle className="w-5 h-5 text-red-500" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-text-primary mb-1">Evite</h3>
+                          <p className="text-xs text-text-secondary leading-relaxed">Não use roupas largas, não tire de lado ou de costas. A foto deve ser frontal e mostrar o corpo inteiro.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
           </FadeIn>
         </div>
       </div>

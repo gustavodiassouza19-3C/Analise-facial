@@ -1,4 +1,5 @@
 import { useLayoutEffect, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { GoArrowUpRight } from 'react-icons/go';
 
@@ -15,6 +16,7 @@ const CardNav = ({
 }) => {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
   
   // Referência para o contêiner principal para sabermos se o clique foi fora dele
   const containerRef = useRef(null);
@@ -205,6 +207,7 @@ const CardNav = ({
 
           <button
             type="button"
+            onClick={() => navigate('/login')}
             className="card-nav-cta-button hidden md:inline-flex border-0 rounded-[calc(0.75rem-0.2rem)] px-5 items-center h-[46px] font-medium cursor-pointer transition-colors duration-300"
             style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}>
             Get Started

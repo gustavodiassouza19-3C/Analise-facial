@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   Trash2,
   Image,
-  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { uploadAnalysisPhotos, validateMagicBytes } from '@/lib/supabase/storage';
@@ -26,13 +25,14 @@ const PHOTO_SLOTS = [
   { key: 'front', label: 'Frontal', hint: 'Rosto de frente' },
   { key: 'left', label: 'Perfil Esquerdo', hint: 'Lado esquerdo' },
   { key: 'right', label: 'Perfil Direito', hint: 'Lado direito' },
+  { key: 'body', label: 'Físico', hint: 'Corpo de frente (opcional)', optional: true },
 ];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function FaceAnalyzer() {
   const { user } = useAuth();
-  const [photos, setPhotos] = useState({ front: null, left: null, right: null });
+  const [photos, setPhotos] = useState({ front: null, left: null, right: null, body: null });
   const [activeSlot, setActiveSlot] = useState('front');
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
@@ -80,7 +80,16 @@ export default function FaceAnalyzer() {
     ctx.drawImage(video, 0, 0);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const base64 = canvas.toDataURL('image/jpeg', 0.9);
-    setPhotos((prev) => ({ ...prev, [activeSlot]: base64 }));
+    setPhotos((prev) => {
+      const next = { ...prev, [activeSlot]: base64 };
+      // Auto-advance to next empty slot
+      const slotOrder = ['front', 'left', 'right', 'body'];
+      const currentIdx = slotOrder.indexOf(activeSlot);
+      const nextEmpty = slotOrder.find((s, i) => i > currentIdx && !next[s])
+        || slotOrder.find((s) => !next[s]);
+      if (nextEmpty) setActiveSlot(nextEmpty);
+      return next;
+    });
   }, [activeSlot]);
 
   const handlePhotoUpload = useCallback((file) => {
@@ -92,7 +101,18 @@ export default function FaceAnalyzer() {
     }
     setSendError(null);
     const reader = new FileReader();
-    reader.onload = () => setPhotos((prev) => ({ ...prev, [activeSlot]: reader.result }));
+    reader.onload = () => {
+      setPhotos((prev) => {
+        const next = { ...prev, [activeSlot]: reader.result };
+        // Auto-advance to next empty slot
+        const slotOrder = ['front', 'left', 'right', 'body'];
+        const currentIdx = slotOrder.indexOf(activeSlot);
+        const nextEmpty = slotOrder.find((s, i) => i > currentIdx && !next[s])
+          || slotOrder.find((s) => !next[s]);
+        if (nextEmpty) setActiveSlot(nextEmpty);
+        return next;
+      });
+    };
     reader.readAsDataURL(file);
   }, [activeSlot]);
 
@@ -116,7 +136,8 @@ export default function FaceAnalyzer() {
         if (photo) {
           const isValid = await validateMagicBytes(photo);
           if (!isValid) {
-            throw new Error(`A foto ${slot === "front" ? "frontal" : slot === "left" ? "esquerda" : "direita"} nao e uma imagem valida. Use JPG, PNG ou WebP.`);
+            const slotLabel = slot === 'front' ? 'frontal' : slot === 'left' ? 'esquerda' : slot === 'right' ? 'direita' : 'do fisico';
+            throw new Error(`A foto ${slotLabel} nao e uma imagem valida. Use JPG, PNG ou WebP.`);
           }
         }
       }
@@ -142,7 +163,7 @@ export default function FaceAnalyzer() {
       }
 
       setSubmitted(true);
-      setPhotos({ front: null, left: null, right: null });
+      setPhotos({ front: null, left: null, right: null, body: null });
       setActiveSlot('front');
       stopCamera();
     } catch (err) {
@@ -161,231 +182,322 @@ export default function FaceAnalyzer() {
   };
 
   const handleNewScan = () => {
-    setPhotos({ front: null, left: null, right: null });
+    setPhotos({ front: null, left: null, right: null, body: null });
     setActiveSlot('front');
     setSendError(null);
     setSubmitted(false);
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-5 sm:gap-6 p-4 sm:p-6 md:p-8 md:pl-4">
-        {/* Título */}
-        <div>
-          <h1 className="text-base sm:text-lg font-bold tracking-tight text-text-primary">Nova Análise</h1>
-          <p className="text-xs sm:text-sm text-text-muted mt-1">Capture ou envie 3 fotos do rosto</p>
+    <div className="flex-1 p-4 sm:p-6 md:p-8 md:pl-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-lg font-bold tracking-tight text-text-primary">Nova Análise</h1>
+          <p className="text-xs sm:text-sm text-text-muted mt-1">Capture ou envie 3 fotos do rosto e opcionalmente 1 do fisico</p>
         </div>
 
-        {/* Câmera / Preview */}
-        <div className="relative w-full max-w-2xl aspect-[4/3] rounded-2xl overflow-hidden bg-card-bg border border-border">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{ transform: 'scaleX(-1)' }}
-            className={`w-full h-full object-cover ${cameraActive && !photos[activeSlot] ? 'block' : 'hidden'}`}
-          />
-          <canvas ref={canvasRef} className="hidden" />
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_410px] gap-6">
+          {/* Coluna Esquerda: Camera + Botoes */}
+          <div className="flex flex-col gap-4">
+            {/* Camera / Preview */}
+            <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden bg-card-bg border border-border">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{ transform: 'scaleX(-1)' }}
+                className={`w-full h-full object-cover ${cameraActive && !photos[activeSlot] ? 'block' : 'hidden'}`}
+              />
+              <canvas ref={canvasRef} className="hidden" />
 
-          {photos[activeSlot] && (
-            <img src={photos[activeSlot]} alt="Foto capturada" className="w-full h-full object-cover" />
-          )}
+              {photos[activeSlot] && (
+                <img src={photos[activeSlot]} alt="Foto capturada" className="w-full h-full object-cover" />
+              )}
 
-          {!cameraActive && !photos[activeSlot] && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 sm:gap-4 px-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border border-border flex items-center justify-center bg-white/[0.02]">
-                <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-text-secondary" />
-              </div>
-              <p className="text-text-secondary text-xs sm:text-sm text-center">
-                {cameraError || `Ative a câmera ou faça upload de "${PHOTO_SLOTS.find(s => s.key === activeSlot)?.label}"`}
-              </p>
-            </div>
-          )}
-
-          {cameraActive && (
-            <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border">
-              <p className="text-[11px] sm:text-xs font-medium text-text-primary">
-                {PHOTO_SLOTS.find(s => s.key === activeSlot)?.label}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Botões */}
-        <div className="flex flex-wrap gap-2 sm:gap-3">
-          {!cameraActive ? (
-            <button
-              onClick={startCamera}
-              className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-brand-accent text-background font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity"
-            >
-              <Camera className="w-4 h-4" />
-              Ativar Câmera
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={capturePhoto}
-                className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-brand-accent text-background font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity"
-              >
-                <Camera className="w-4 h-4" />
-                Capturar
-              </button>
-              <button
-                onClick={stopCamera}
-                className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl border border-border text-text-secondary font-medium text-xs sm:text-sm hover:text-text-primary hover:bg-white/5 transition-colors"
-              >
-                <CameraOff className="w-4 h-4" />
-                Parar
-              </button>
-            </>
-          )}
-
-          <label
-            onClick={() => fileInputRefs.current[activeSlot]?.click()}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl border border-border text-text-secondary font-medium text-xs sm:text-sm hover:text-text-primary hover:bg-white/5 transition-colors cursor-pointer"
-          >
-            <Upload className="w-4 h-4" />
-            Upload
-          </label>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            ref={(el) => { fileInputRefs.current[activeSlot] = el; }}
-            onChange={(e) => handlePhotoUpload(e.target.files?.[0])}
-          />
-
-          {/* Botão Enviar */}
-          <button
-            onClick={handleSend}
-            disabled={!photos.front || sending}
-            className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all ${
-              photos.front && !sending
-                ? 'bg-brand-accent text-background hover:opacity-90'
-                : 'bg-white/5 text-text-muted border border-border cursor-not-allowed'
-            }`}
-          >
-            {sending ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                <span className="hidden sm:inline">Enviar para Avaliação</span>
-                <span className="sm:hidden">Enviar</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        <p className="text-[11px] text-text-muted">
-          Formatos: JPG, PNG, WebP — máx. 5MB
-        </p>
-
-        {/* Erro */}
-        {sendError && (
-          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            {sendError}
-          </div>
-        )}
-
-        {/* Notificação de sucesso */}
-        {submitted && (
-          <div className="p-3 sm:p-4 rounded-xl bg-green-500/10 border border-green-500/20 flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-green-400">
-                Fotos enviadas para avaliação
-              </p>
-              <p className="text-xs text-green-400/70 mt-1">
-                Um de nossos profissionais irá analisá-las em breve.
-              </p>
-            </div>
-            <button
-              onClick={handleNewScan}
-              className="text-xs text-green-400/60 hover:text-green-400 transition-colors underline underline-offset-2 shrink-0"
-            >
-              Enviar outra
-            </button>
-          </div>
-        )}
-
-        {/* Cards das fotos */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
-          {PHOTO_SLOTS.map(({ key, label, hint }) => (
-            <ContextMenu key={key}>
-              <ContextMenuTrigger asChild>
-                <div
-                  onClick={() => setActiveSlot(key)}
-                  className={`relative flex flex-col rounded-xl sm:rounded-2xl border overflow-hidden cursor-pointer transition-all duration-300 ${
-                    activeSlot === key
-                      ? 'border-brand-accent shadow-[0_0_20px_rgba(255,255,255,0.15)]'
-                      : 'border-border hover:border-brand-accent/40'
-                  } bg-card-bg`}
-                >
-                  {photos[key] ? (
-                    <>
-                      <img src={photos[key]} alt={label} className="w-full aspect-[3/4] object-cover" />
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleRemovePhoto(key); }}
-                        className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-background/80 border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-background transition-colors text-[10px] sm:text-xs"
-                      >×</button>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 aspect-[3/4] px-2 sm:px-4">
-                      <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border border-border flex items-center justify-center bg-white/[0.02]">
-                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-text-muted" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[11px] sm:text-sm font-medium text-text-primary">{label}</p>
-                        <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 hidden sm:block">{hint}</p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="px-2 sm:px-3 py-1.5 sm:py-2 border-t border-border">
-                    <p className="text-[10px] sm:text-[11px] font-medium text-text-secondary text-center">{label}</p>
+              {!cameraActive && !photos[activeSlot] && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 sm:gap-4 px-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border border-border flex items-center justify-center bg-white/[0.02]">
+                    <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-text-secondary" />
                   </div>
+                  <p className="text-text-secondary text-xs sm:text-sm text-center">
+                    {cameraError || `Ative a câmera ou faça upload de "${PHOTO_SLOTS.find(s => s.key === activeSlot)?.label}"`}
+                  </p>
                 </div>
-              </ContextMenuTrigger>
-              <ContextMenuContent className="bg-background border-border">
-                <ContextMenuItem
-                  onClick={() => {
-                    setActiveSlot(key);
-                    if (!cameraActive) startCamera();
-                  }}
-                  className="gap-2 text-text-primary focus:bg-white/5 focus:text-text-primary"
+              )}
+
+              {cameraActive && (
+                <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border">
+                  <p className="text-[11px] sm:text-xs font-medium text-text-primary">
+                    {PHOTO_SLOTS.find(s => s.key === activeSlot)?.label}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Botoes de acao */}
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              {!cameraActive ? (
+                <button
+                  onClick={startCamera}
+                  className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-brand-accent text-background font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity"
                 >
                   <Camera className="w-4 h-4" />
-                  Capturar
-                </ContextMenuItem>
-                <ContextMenuItem
-                  onClick={() => {
-                    setActiveSlot(key);
-                    setTimeout(() => fileInputRefs.current[key]?.click(), 100);
-                  }}
-                  className="gap-2 text-text-primary focus:bg-white/5 focus:text-text-primary"
+                  Ativar Câmera
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={capturePhoto}
+                    className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-brand-accent text-background font-semibold text-xs sm:text-sm hover:opacity-90 transition-opacity"
+                  >
+                    <Camera className="w-4 h-4" />
+                    Capturar
+                  </button>
+                  <button
+                    onClick={stopCamera}
+                    className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl border border-border text-text-secondary font-medium text-xs sm:text-sm hover:text-text-primary hover:bg-white/5 transition-colors"
+                  >
+                    <CameraOff className="w-4 h-4" />
+                    Parar
+                  </button>
+                </>
+              )}
+
+              <label
+                onClick={() => fileInputRefs.current[activeSlot]?.click()}
+                className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl border border-border text-text-secondary font-medium text-xs sm:text-sm hover:text-text-primary hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                Upload
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                ref={(el) => { fileInputRefs.current[activeSlot] = el; }}
+                onChange={(e) => {
+                  handlePhotoUpload(e.target.files?.[0]);
+                  e.target.value = '';
+                }}
+              />
+            </div>
+
+            <p className="text-[11px] text-text-muted">
+              Formatos: JPG, PNG, WebP — max. 5MB
+            </p>
+
+            {/* Erro */}
+            {sendError && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                {sendError}
+              </div>
+            )}
+
+            {/* Notificacao de sucesso */}
+            {submitted && (
+              <div className="p-3 sm:p-4 rounded-xl bg-green-500/10 border border-green-500/20 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-green-400">
+                    Fotos enviadas para avaliacao
+                  </p>
+                  <p className="text-xs text-green-400/70 mt-1">
+                    Um de nossos profissionais ira analisa-las em breve.
+                  </p>
+                </div>
+                <button
+                  onClick={handleNewScan}
+                  className="text-xs text-green-400/60 hover:text-green-400 transition-colors underline underline-offset-2 shrink-0"
                 >
-                  <Image className="w-4 h-4" />
-                  Upload
-                </ContextMenuItem>
-                {photos[key] && (
-                  <>
-                    <ContextMenuSeparator className="bg-border" />
-                    <ContextMenuItem
-                      onClick={() => handleRemovePhoto(key)}
-                      className="gap-2 text-red-400 focus:bg-red-500/10 focus:text-red-400"
+                  Enviar outra
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Coluna Direita: Slots de Fotos */}
+          <div className="flex flex-col gap-4">
+            <div className="rounded-2xl border border-border bg-card-bg p-4">
+              <h2 className="text-sm font-semibold text-text-primary mb-3">Fotos do Rosto</h2>
+              <div className="grid grid-cols-3 gap-3">
+                {PHOTO_SLOTS.filter(s => !s.optional).map(({ key, label, hint }) => (
+                  <ContextMenu key={key}>
+                    <ContextMenuTrigger asChild>
+                      <div
+                        onClick={() => setActiveSlot(key)}
+                        className={`relative flex flex-col rounded-xl border overflow-hidden cursor-pointer transition-all duration-300 ${
+                          activeSlot === key
+                            ? 'border-brand-accent shadow-[0_0_20px_rgba(255,255,255,0.15)]'
+                            : photos[key]
+                              ? 'border-border hover:border-brand-accent/40'
+                              : 'border-dashed border-border/60 hover:border-brand-accent/50 hover:bg-white/[0.02]'
+                        } bg-background`}
+                      >
+                        {photos[key] ? (
+                          <>
+                            <img src={photos[key]} alt={label} className="w-full aspect-square object-cover" />
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleRemovePhoto(key); }}
+                              className="absolute top-1.5 right-1.5 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-background/80 border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-background transition-colors text-[10px] sm:text-xs"
+                            >x</button>
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-2.5 aspect-square px-3 bg-white/[0.01]">
+                            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full border-2 border-dashed border-border/50 flex items-center justify-center bg-white/[0.02] transition-colors group-hover:border-brand-accent/30">
+                              <User className="w-5 h-5 sm:w-7 sm:h-7 text-text-muted" />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs sm:text-sm font-medium text-text-primary leading-tight">{label}</p>
+                              <p className="text-[10px] sm:text-[11px] text-text-muted mt-0.5 hidden sm:block">{hint}</p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="px-2.5 py-1.5 border-t border-border">
+                          <p className="text-[11px] sm:text-xs font-medium text-text-secondary text-center">{label}</p>
+                        </div>
+                      </div>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent className="bg-background border-border">
+                      <ContextMenuItem
+                        onClick={() => {
+                          setActiveSlot(key);
+                          if (!cameraActive) startCamera();
+                        }}
+                        className="gap-2 text-text-primary focus:bg-white/5 focus:text-text-primary"
+                      >
+                        <Camera className="w-4 h-4" />
+                        Capturar
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onClick={() => {
+                          setActiveSlot(key);
+                          setTimeout(() => fileInputRefs.current[key]?.click(), 100);
+                        }}
+                        className="gap-2 text-text-primary focus:bg-white/5 focus:text-text-primary"
+                      >
+                        <Image className="w-4 h-4" />
+                        Upload
+                      </ContextMenuItem>
+                      {photos[key] && (
+                        <>
+                          <ContextMenuSeparator className="bg-border" />
+                          <ContextMenuItem
+                            onClick={() => handleRemovePhoto(key)}
+                            className="gap-2 text-red-400 focus:bg-red-500/10 focus:text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Remover
+                          </ContextMenuItem>
+                        </>
+                      )}
+                    </ContextMenuContent>
+                  </ContextMenu>
+                ))}
+              </div>
+            </div>
+
+            {/* Foto do fisico (opcional) */}
+            {PHOTO_SLOTS.filter(s => s.optional).map(({ key, label, hint }) => (
+              <div key={key} className="rounded-2xl border border-border bg-card-bg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-text-primary">{label}</h2>
+                  <span className="text-[10px] text-text-muted bg-white/5 px-2 py-0.5 rounded-full">Opcional</span>
+                </div>
+                <ContextMenu>
+                  <ContextMenuTrigger asChild>
+                    <div
+                      onClick={() => setActiveSlot(key)}
+                      className={`relative flex flex-col rounded-xl border overflow-hidden cursor-pointer transition-all duration-300 ${
+                        activeSlot === key
+                          ? 'border-brand-accent shadow-[0_0_20px_rgba(255,255,255,0.15)]'
+                          : photos[key]
+                            ? 'border-border hover:border-brand-accent/40'
+                            : 'border-dashed border-border/60 hover:border-brand-accent/50 hover:bg-white/[0.02]'
+                      } bg-background`}
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Remover
+                      {photos[key] ? (
+                        <>
+                          <img src={photos[key]} alt={label} className="w-full aspect-[4/3] object-cover" />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRemovePhoto(key); }}
+                            className="absolute top-1.5 right-1.5 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-background/80 border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-background transition-colors text-[10px] sm:text-xs"
+                          >x</button>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 aspect-[4/3] px-3 bg-white/[0.01]">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-dashed border-border/50 flex items-center justify-center bg-white/[0.02]">
+                            <User className="w-5 h-5 sm:w-6 sm:h-6 text-text-muted" />
+                          </div>
+                          <p className="text-[11px] sm:text-xs font-medium text-text-primary text-center">{hint}</p>
+                        </div>
+                      )}
+                    </div>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent className="bg-background border-border">
+                    <ContextMenuItem
+                      onClick={() => {
+                        setActiveSlot(key);
+                        if (!cameraActive) startCamera();
+                      }}
+                      className="gap-2 text-text-primary focus:bg-white/5 focus:text-text-primary"
+                    >
+                      <Camera className="w-4 h-4" />
+                      Capturar
                     </ContextMenuItem>
-                  </>
-                )}
-              </ContextMenuContent>
-            </ContextMenu>
-          ))}
+                    <ContextMenuItem
+                      onClick={() => {
+                        setActiveSlot(key);
+                        setTimeout(() => fileInputRefs.current[key]?.click(), 100);
+                      }}
+                      className="gap-2 text-text-primary focus:bg-white/5 focus:text-text-primary"
+                    >
+                      <Image className="w-4 h-4" />
+                      Upload
+                    </ContextMenuItem>
+                    {photos[key] && (
+                      <>
+                        <ContextMenuSeparator className="bg-border" />
+                        <ContextMenuItem
+                          onClick={() => handleRemovePhoto(key)}
+                          className="gap-2 text-red-400 focus:bg-red-500/10 focus:text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Remover
+                        </ContextMenuItem>
+                      </>
+                    )}
+                  </ContextMenuContent>
+                </ContextMenu>
+              </div>
+            ))}
+
+            {/* Botao Enviar */}
+            <button
+              onClick={handleSend}
+              disabled={!photos.front || sending}
+              className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all ${
+                photos.front && !sending
+                  ? 'bg-brand-accent text-background hover:opacity-90'
+                  : 'bg-white/5 text-text-muted border border-border cursor-not-allowed'
+              }`}
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Enviar para Avaliacao
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
+    </div>
   );
 }
