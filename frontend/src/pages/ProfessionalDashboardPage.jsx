@@ -85,7 +85,7 @@ export default function ProfessionalDashboardPage() {
               <ScanFace className="w-4 h-4 sm:w-5 sm:h-5 text-brand-accent" />
             </div>
             <div>
-              <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight">FaceMax Professional</h1>
+              <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight font-alpino">FaceMax Professional</h1>
               <p className="text-[10px] sm:text-[11px] text-text-muted">{user?.role === 'admin' ? 'Administrador' : 'Especialista'}</p>
             </div>
           </div>

@@ -226,16 +226,38 @@ const CardNav = ({
               ref={setCardRef(idx)}
               style={{ backgroundColor: item.bgColor, color: item.textColor }}>
               <div
-  className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px] transition-all duration-300 hover:text-brand-accent cursor-pointer">
-  {item.label}
-</div>
+                onClick={() => {
+                  const firstLink = item.links?.[0];
+                  if (firstLink?.href) {
+                    if (firstLink.href.startsWith('mailto:')) {
+                      window.location.href = firstLink.href;
+                    } else {
+                      const el = document.querySelector(firstLink.href);
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    closeMenu();
+                  }
+                }}
+                className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px] transition-all duration-300 hover:text-brand-accent cursor-pointer">
+                {item.label}
+              </div>
               <div className="nav-card-links mt-auto flex flex-col gap-[2px]">
                 {item.links?.map((lnk, i) => (
                   <a
                     key={`${lnk.label}-${i}`}
                     className="nav-card-link inline-flex items-center gap-[6px] no-underline cursor-pointer transition-opacity duration-300 hover:opacity-75 text-[15px] md:text-[16px]"
                     href={lnk.href}
-                    aria-label={lnk.ariaLabel}>
+                    aria-label={lnk.ariaLabel}
+                    onClick={(e) => {
+                      if (lnk.href.startsWith('#')) {
+                        e.preventDefault();
+                        const el = document.querySelector(lnk.href);
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        closeMenu();
+                      } else if (lnk.href.startsWith('mailto:')) {
+                        closeMenu();
+                      }
+                    }}>
                     <GoArrowUpRight className="nav-card-link-icon shrink-0" aria-hidden="true" />
                     {lnk.label}
                   </a>

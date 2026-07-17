@@ -193,7 +193,7 @@ export default function FaceAnalyzer() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-lg font-bold tracking-tight text-text-primary">Nova Análise</h1>
+          <h1 className="text-lg font-bold tracking-tight text-text-primary font-alpino">Nova Análise</h1>
           <p className="text-xs sm:text-sm text-text-muted mt-1">Capture ou envie 3 fotos do rosto e opcionalmente 1 do fisico</p>
         </div>
 

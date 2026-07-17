@@ -125,7 +125,7 @@ export default function EvaluationDetailPage() {
                 Voltar
               </button>
               <div className="h-5 w-px bg-border" />
-              <h1 className="text-lg font-bold tracking-tight text-text-primary">
+              <h1 className="text-lg font-bold tracking-tight text-text-primary font-alpino">
                 Detalhe da Avaliacao
               </h1>
             </div>

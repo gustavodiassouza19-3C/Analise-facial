@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform, useReducedMotion, useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useAnimatedNumber } from '@/hooks/useAnimatedNumber';
 import { ScanFace, BarChart3, Lightbulb, ShieldCheck, Camera, Users, BookOpen, Sparkles, TrendingUp, Check, Lock, Crown, Zap, Award, Globe } from 'lucide-react';
 import { FaInstagram, FaTwitter, FaLinkedin, FaGithub } from 'react-icons/fa';
@@ -64,7 +64,7 @@ const features = [
   {
     icon: Lightbulb,
     title: "Visagismo Profissional",
-    description: "Recomendações exclusivas de corte, barba e armações escritas por especialistas em estética facial masculina.",
+    description: "Recomendações exclusivas de corte, barba e armações escritas por especialistas em estética facial.",
     hueA: 40,
     hueB: 55,
   },
@@ -138,7 +138,7 @@ function FeatureCard({ feature, index }) {
             >
               <feature.icon className="w-[72px] h-[72px]" strokeWidth={1.5} />
             </motion.span>
-            <h3 className="text-xl font-bold text-text-primary text-center font-playfair">{feature.title}</h3>
+            <h3 className="text-xl font-bold text-text-primary text-center font-montenegrin">{feature.title}</h3>
             <p className="text-base text-text-secondary text-center leading-relaxed">{feature.description}</p>
           </div>
         </div>
@@ -171,6 +171,10 @@ export default function LandingPage() {
   const circleInView = useInView(circleRef, { once: true, amount: 0.5 });
   const animatedScore = useAnimatedNumber(circleInView ? 85 : 0, 1200, 300);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="relative min-h-screen w-screen bg-background overflow-x-hidden font-urbanist">
 
@@ -200,9 +204,9 @@ export default function LandingPage() {
             Pioneirismo Nacional em Estética Facial
           </motion.span>
 
-          <motion.h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-center max-w-5xl leading-tight font-playfair" initial={prefersReduced ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: easeOutExpo, delay: 0.25 }}>
+          <motion.h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-center max-w-5xl leading-tight font-montenegrin" initial={prefersReduced ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: easeOutExpo, delay: 0.25 }}>
             <GradientText colors={["#D4AF37", "#B8860B", "#FFD700", "#8B6914"]} animationSpeed={4}>
-              A Elite da Estética<br />Masculina Brasileira
+              A Elite da Estética<br />Brasileira
             </GradientText>
           </motion.h1>
 
@@ -225,9 +229,9 @@ export default function LandingPage() {
             </motion.div>
             <motion.div initial={prefersReduced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.6, ease: easeOutExpo }}>
               <GlassSurface width={180} height={48} borderRadius={12} backgroundOpacity={0.15} blur={10} saturation={1.3} brightness={50} displace={0.3}>
-                <Link to="#como-funciona" className="inline-flex items-center justify-center w-full h-full text-white font-medium text-sm text-center">
+                <a href="#como-funciona" className="inline-flex items-center justify-center w-full h-full text-white font-medium text-sm text-center">
                   Como Funciona
-                </Link>
+                </a>
               </GlassSurface>
             </motion.div>
           </div>
@@ -262,7 +266,7 @@ export default function LandingPage() {
       <section className="relative z-20 w-full bg-background">
         <ScrollFadeUp className="w-full flex flex-col items-center justify-center pt-24 pb-12 px-6">
           <span className="text-brand-accent text-sm font-medium tracking-widest uppercase mb-4">Funcionalidades</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-text-primary text-center max-w-2xl font-playfair">
+          <h2 className="text-3xl md:text-4xl font-bold text-text-primary text-center max-w-2xl font-montenegrin">
             Análise facial com inteligência artificial e olhar humano
           </h2>
           <p className="text-text-secondary text-center mt-4 max-w-xl">
@@ -281,7 +285,7 @@ export default function LandingPage() {
       <section id="como-funciona" className="relative z-20 w-full bg-background">
         <ScrollFadeUp className="w-full flex flex-col items-center justify-center pt-24 pb-12 px-6">
           <span className="text-brand-accent text-sm font-medium tracking-widest uppercase mb-4">Processo Simples</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-text-primary text-center max-w-2xl font-playfair">
+          <h2 className="text-3xl md:text-4xl font-bold text-text-primary text-center max-w-2xl font-montenegrin">
             Sua Jornada de Evolução em 3 Passos
           </h2>
         </ScrollFadeUp>
@@ -292,7 +296,7 @@ export default function LandingPage() {
               <div className="bg-card-bg border border-border rounded-2xl p-8 flex flex-col items-center text-center h-full hover:border-brand-accent/30 transition-colors duration-300">
                 <span className="text-6xl font-black text-brand-accent mb-4 font-playfair">{step.number}</span>
                 <step.icon className="w-12 h-12 text-brand-accent mb-4" strokeWidth={1.5} />
-                <h3 className="text-lg font-semibold text-text-primary mb-3 font-playfair">{step.title}</h3>
+                <h3 className="text-lg font-semibold text-text-primary mb-3 font-montenegrin">{step.title}</h3>
                 <p className="text-sm text-text-secondary leading-relaxed">{step.description}</p>
               </div>
             </ScrollStaggerItem>
@@ -305,7 +309,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <ScrollFadeUp className="flex flex-col gap-6">
             <span className="text-brand-accent text-sm font-medium tracking-widest uppercase">Seu Relatório por Dentro</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary leading-tight font-playfair">
+            <h2 className="text-3xl md:text-4xl font-bold text-text-primary leading-tight font-montenegrin">
               Um relatório de elite, direto ao ponto
             </h2>
             <p className="text-text-secondary text-base leading-relaxed">
@@ -390,7 +394,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-24">
           <ScrollFadeUp className="text-center mb-16">
             <span className="text-brand-accent text-sm font-medium tracking-widest uppercase mb-4 block">Elite da Estética</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4 font-playfair">
+            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4 font-montenegrin">
               Escolha o seu plano de transformação
             </h2>
             <p className="text-text-secondary text-base max-w-2xl mx-auto leading-relaxed">
@@ -428,7 +432,7 @@ export default function LandingPage() {
             <ScrollStaggerItem>
               <div className="bg-card-bg border-2 border-brand-accent/60 rounded-2xl p-8 flex flex-col h-full relative shadow-[0_0_30px_rgba(212,175,55,0.1)]">
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <span className="bg-brand-accent text-background text-[10px] font-bold uppercase tracking-widest px-5 py-1.5 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+                  <span className="bg-brand-accent text-background text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.4)] whitespace-nowrap">
                     Mais Vendido — Economize R$ 120
                   </span>
                 </div>
@@ -499,7 +503,7 @@ export default function LandingPage() {
         <div className="relative max-w-3xl mx-auto px-6 text-center">
           <ScrollFadeUp>
             <Sparkles className="w-12 h-12 text-brand-accent mx-auto mb-6" strokeWidth={1.5} />
-            <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6 leading-tight font-playfair">
+            <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6 leading-tight font-montenegrin">
               Pronto para descobrir o seu{' '}
               <span className="text-brand-accent">verdadeiro potencial</span>?
             </h2>
@@ -532,7 +536,7 @@ export default function LandingPage() {
         </p>
         <div className="w-full h-[1px] bg-border my-2" />
         <div className="text-text-muted text-sm">
-          {new Date().getFullYear()} — <strong className="text-brand-accent font-playfair">FaceMax</strong> — Elite da Estética Masculina
+          {new Date().getFullYear()} — <strong className="text-brand-accent font-playfair">FaceMax</strong> — Elite da Estética
         </div>
       </footer>
     </div>

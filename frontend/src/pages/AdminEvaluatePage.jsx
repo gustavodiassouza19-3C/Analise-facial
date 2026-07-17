@@ -114,7 +114,7 @@ export default function AdminEvaluatePage() {
                 Voltar
               </button>
               <div className="h-5 w-px bg-border" />
-              <h1 className="text-lg font-bold tracking-tight text-text-primary">
+              <h1 className="text-lg font-bold tracking-tight text-text-primary font-alpino">
                 Avaliar Análise
               </h1>
               <span className="text-xs text-text-muted ml-auto">

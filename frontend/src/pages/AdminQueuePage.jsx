@@ -35,7 +35,7 @@ export default function AdminQueuePage() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <ClipboardList className="w-5 h-5 text-brand-accent" />
-                <h1 className="text-lg font-bold tracking-tight text-text-primary">Fila de Pendências</h1>
+                <h1 className="text-lg font-bold tracking-tight text-text-primary font-alpino">Fila de Pendências</h1>
               </div>
               <span className="text-xs text-text-muted">
                 {analyses.length} análise{analyses.length !== 1 ? 's' : ''} pendente{analyses.length !== 1 ? 's' : ''}

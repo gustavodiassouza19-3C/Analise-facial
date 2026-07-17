@@ -324,7 +324,7 @@ export default function ProfessionalEvaluatePage() {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="text-sm font-bold text-white">Avaliar Analise</h1>
+            <h1 className="text-sm font-bold text-white font-alpino">Avaliar Analise</h1>
             <p className="text-[11px] text-text-muted">{analysis?.profiles?.full_name || 'Cliente'}</p>
           </div>
         </div>

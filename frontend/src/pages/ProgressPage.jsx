@@ -1,23 +1,81 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, CheckCircle2, AlertCircle, BarChart3, Eye, TrendingUp } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { createClient } from '@/lib/supabase/client';
+import { Clock, CheckCircle2, AlertCircle, BarChart3, Eye, TrendingUp, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StaggerContainer, StaggerItem, FadeIn, ScaleIn } from '@/components/ui/page-transition';
 
+const BUCKET = 'analysis-photos';
+
+function getPhotoUrl(urlOrPath) {
+  if (!urlOrPath) return null;
+  if (urlOrPath.startsWith('http')) return urlOrPath;
+  const supabase = createClient();
+  const cleanPath = urlOrPath.replace(/^\/+/, '');
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(cleanPath);
+  return data?.publicUrl || null;
+}
+
+function normalizeAnalysis(row) {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    status: row.status,
+    photos: {
+      front: getPhotoUrl(row.photo_front_url),
+      left: getPhotoUrl(row.photo_left_url),
+      right: getPhotoUrl(row.photo_right_url),
+    },
+    evaluation: row.result && Object.keys(row.result).length > 0 ? row.result : null,
+    verdict_text: row.verdict_text,
+    reviewed_at: row.reviewed_at,
+  };
+}
+
 export default function ProgressPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [pending, setPending] = useState([]);
   const [evaluated, setEvaluated] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setPending(JSON.parse(localStorage.getItem('pending_evaluations') || '[]'));
-    setEvaluated(JSON.parse(localStorage.getItem('evaluations') || '[]'));
-  }, []);
+    if (!user) return;
+    fetchData();
+  }, [user]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const supabase = createClient();
+
+      const { data: pendingData } = await supabase
+        .from('analyses')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      const { data: completedData } = await supabase
+        .from('analyses')
+        .select('*')
+        .eq('status', 'completed')
+        .order('reviewed_at', { ascending: false });
+
+      setPending((pendingData || []).map(normalizeAnalysis));
+      setEvaluated((completedData || []).map(normalizeAnalysis));
+    } catch (err) {
+      console.error('Failed to fetch analyses:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   function formatDate(dateStr) {
+    if (!dateStr) return '--';
     return new Date(dateStr).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -27,15 +85,23 @@ export default function ProgressPage() {
     });
   }
 
-  // Prepare chart data from evaluated analyses
   const chartData = evaluated
+    .filter((a) => a.evaluation?.overall_score != null)
     .map((a, i) => ({
       index: i + 1,
       label: `#${i + 1}`,
-      score: a.evaluation?.overall_score ?? 0,
-      date: new Date(a.evaluation?.evaluatedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+      score: a.evaluation.overall_score,
+      date: new Date(a.evaluation.evaluatedAt || a.reviewed_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
     }))
     .reverse();
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-brand-accent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 p-4 md:p-8 md:pl-4">
@@ -44,7 +110,7 @@ export default function ProgressPage() {
           <FadeIn>
             <div className="flex items-center gap-3 mb-8">
               <BarChart3 className="w-5 h-5 text-brand-accent" />
-              <h1 className="text-lg font-bold tracking-tight text-text-primary">Meu Progresso</h1>
+              <h1 className="text-lg font-bold tracking-tight text-text-primary font-alpino">Meu Progresso</h1>
             </div>
           </FadeIn>
 
@@ -97,14 +163,14 @@ export default function ProgressPage() {
             </StaggerItem>
           </StaggerContainer>
 
-          {/* Line Chart - Scores over time */}
-          {evaluated.length > 0 && (
+          {/* Line Chart */}
+          {chartData.length > 0 && (
             <ScaleIn delay={0.2}>
               <Card className="bg-card-bg border-border rounded-2xl mb-8">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-brand-accent" />
-                    <CardTitle className="text-sm text-text-primary">Evolução das Pontuações</CardTitle>
+                    <CardTitle className="text-sm text-text-primary font-alpino">Evolucao das Pontuacoes</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-2">
@@ -178,7 +244,7 @@ export default function ProgressPage() {
               {pending.length === 0 ? (
                 <div className="flex flex-col items-center gap-4 py-16">
                   <CheckCircle2 className="w-12 h-12 text-green-400" />
-                  <p className="text-sm text-text-secondary">Nenhuma análise pendente. Tudo em dia!</p>
+                  <p className="text-sm text-text-secondary">Nenhuma analise pendente. Tudo em dia!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -198,7 +264,7 @@ export default function ProgressPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-text-primary truncate">
-                            Análise Facial
+                            Analise Facial
                           </p>
                           <p className="text-xs text-text-muted mt-0.5">
                             Enviada em {formatDate(a.createdAt)}
@@ -220,7 +286,7 @@ export default function ProgressPage() {
               {evaluated.length === 0 ? (
                 <div className="flex flex-col items-center gap-4 py-16">
                   <AlertCircle className="w-12 h-12 text-text-muted" />
-                  <p className="text-sm text-text-secondary">Nenhuma avaliação realizada ainda.</p>
+                  <p className="text-sm text-text-secondary">Nenhuma avaliacao realizada ainda.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -244,18 +310,18 @@ export default function ProgressPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-text-primary truncate">
-                            Análise Facial
+                            Analise Facial
                           </p>
                           <p className="text-xs text-text-muted mt-0.5">
-                            Avaliada em {formatDate(a.evaluation?.evaluatedAt)}
+                            Avaliada em {formatDate(a.evaluation?.evaluatedAt || a.reviewed_at)}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant="success">
-                            Score: {a.evaluation?.overall_score ?? '—'}
+                            Score: {a.evaluation?.overall_score ?? '--'}
                           </Badge>
                           <Badge variant="default">
-                            {a.evaluation?.categories?.terco_superior ?? '—'}
+                            {a.evaluation?.categories?.terco_superior ?? '--'}
                           </Badge>
                           <Eye className="w-4 h-4 text-text-muted ml-1" />
                         </div>

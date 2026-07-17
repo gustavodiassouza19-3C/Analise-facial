@@ -1,0 +1,56 @@
+# ============================================================
+# .dockerignore - FaceMax Frontend
+# ============================================================
+
+# Dependências (serão instaladas no container)
+node_modules
+
+# Build anterior
+dist
+dist-ssr
+
+# Git
+.git
+.gitignore
+
+# Variaveis de ambiente locais (.env e necessario para o build Vite)
+!.env
+!.env.*
+
+# Editor / IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Documentação
+README.md
+LICENSE
+
+# Docker (evitar loops)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache
+.npm
+.eslintcache
+.stylelintcache
+
+# Testes
+coverage
+.nyc_output
+
+# MimoCode
+.mimocode

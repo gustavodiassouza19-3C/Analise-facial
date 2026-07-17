@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Check, X, ShieldCheck } from 'lucide-react';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Neutro'];
 const STYLE_OPTIONS = [
@@ -28,10 +29,21 @@ export default function SignupPage() {
   const [gender, setGender] = useState('');
   const [age, setAge] = useState('');
   const [styleObjective, setStyleObjective] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsModalTab, setTermsModalTab] = useState('terms');
+  const [showConsentError, setShowConsentError] = useState(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    setShowConsentError(false);
+
+    if (!acceptedTerms) {
+      setShowConsentError(true);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -81,6 +93,7 @@ export default function SignupPage() {
   };
 
   return (
+    <>
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm">
         <Card className="overflow-hidden bg-card-bg border-border">
@@ -156,16 +169,16 @@ export default function SignupPage() {
               </div>
               <div className="grid gap-2">
                 <Label className="text-text-secondary text-sm">Genero</Label>
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="flex h-10 w-full rounded-xl border border-neutral-800 bg-[#0a0a0a] px-4 py-2.5 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/40 focus-visible:border-brand-accent/30 transition-colors appearance-none"
-                >
-                  <option value="" className="bg-[#0a0a0a] text-neutral-400">Selecione</option>
-                  {GENDER_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt} className="bg-[#0a0a0a] text-white">{opt}</option>
-                  ))}
-                </select>
+                <Select value={gender} onValueChange={setGender}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENDER_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label className="text-text-secondary text-sm">Objetivo de Estilo</Label>
@@ -186,6 +199,59 @@ export default function SignupPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Consent Checkbox */}
+              <div className="space-y-2">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => {
+                        setAcceptedTerms(e.target.checked);
+                        setShowConsentError(false);
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className={`w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center ${
+                      acceptedTerms
+                        ? 'bg-brand-accent border-brand-accent'
+                        : showConsentError
+                          ? 'border-red-400 bg-red-500/10'
+                          : 'border-border bg-white/[0.02] group-hover:border-brand-accent/50'
+                    }`}>
+                      {acceptedTerms && (
+                        <Check className="w-3 h-3 text-background" strokeWidth={3} />
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+                    Li e concordo com os{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); setTermsModalTab('terms'); setShowTermsModal(true); }}
+                      className="text-brand-accent hover:text-brand-accent/80 underline underline-offset-2 font-medium"
+                    >
+                      Termos de Uso
+                    </button>
+                    {' '}e{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); setTermsModalTab('privacy'); setShowTermsModal(true); }}
+                      className="text-brand-accent hover:text-brand-accent/80 underline underline-offset-2 font-medium"
+                    >
+                      Politica de Privacidade
+                    </button>
+                  </span>
+                </label>
+                {showConsentError && (
+                  <p className="text-xs text-red-400 flex items-center gap-1.5 ml-8">
+                    <span className="w-1 h-1 rounded-full bg-red-400" />
+                    Voce precisa aceitar os termos para criar sua conta
+                  </p>
+                )}
+              </div>
+
               <Button
                 type="submit"
                 disabled={loading}
@@ -209,5 +275,148 @@ export default function SignupPage() {
         </Card>
       </div>
     </div>
+
+    {/* Terms Modal */}
+    {showTermsModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+        <div className="w-full max-w-lg bg-[#141414] border border-border rounded-2xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-brand-accent" />
+              <h2 className="text-base font-bold text-white">Documentos Legais</h2>
+            </div>
+            <button
+              onClick={() => setShowTermsModal(false)}
+              className="p-1.5 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b border-border">
+            <button
+              onClick={() => setTermsModalTab('terms')}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                termsModalTab === 'terms'
+                  ? 'text-brand-accent border-b-2 border-brand-accent'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              Termos de Uso
+            </button>
+            <button
+              onClick={() => setTermsModalTab('privacy')}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                termsModalTab === 'privacy'
+                  ? 'text-brand-accent border-b-2 border-brand-accent'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              Politica de Privacidade
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-5 max-h-[60vh] overflow-y-auto">
+            {termsModalTab === 'terms' ? (
+              <div className="space-y-4 text-sm text-text-secondary leading-relaxed">
+                <h3 className="text-base font-semibold text-text-primary">Termos de Uso</h3>
+                <p>
+                  Ao utilizar o FaceMax, voce concorda com os seguintes termos:
+                </p>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">1. Servico</h4>
+                  <p>
+                    O FaceMax oferece analises esteticas faciais e corporais realizadas por profissionais especializados, 
+                    auxiliadas por inteligencia artificial. O servico e destinado a maiores de 18 anos.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">2. Uso das Fotos</h4>
+                  <p>
+                    Suas fotos sao armazenadas de forma segura e privada no nosso servidor (Supabase Storage). 
+                    Elas sao utilizadas exclusivamente para a realizacao da analise estetica solicitada e nao sao 
+                    compartilhadas com terceiros.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">3. Responsabilidades</h4>
+                  <p>
+                    Voce e responsavel por manter a seguranca da sua conta e por todas as atividades realizadas 
+                    nela. As recomendacoes fornecidas sao de cunho estetico e nao substituem orientacao medica.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">4. Propriedade Intelectual</h4>
+                  <p>
+                    Todo o conteudo do FaceMax, incluindo textos, graficos e codigo, e protegido por direitos 
+                    autorais e nao pode ser reproduzido sem autorizacao.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 text-sm text-text-secondary leading-relaxed">
+                <h3 className="text-base font-semibold text-text-primary">Politica de Privacidade</h3>
+                <p>
+                  Sua privacidade e importante para nós. Esta politica descreve como coletamos, usamos e protegemos seus dados.
+                </p>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">1. Dados Coletados</h4>
+                  <p>
+                    Coletamos: nome, email, idade, genero, objetivo de estilo, fotos enviadas para analise e dados de uso da plataforma.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">2. Uso das Fotos</h4>
+                  <p>
+                    Suas fotos faciais e corporais sao armazenadas em bucket privado no Supabase Storage e sao acessiveis 
+                    apenas por voce e pelos profissionais autorizados a realizar sua analise. As fotos nunca sao vendidas, 
+                    compartilhadas ou utilizadas para treinamento de IA.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">3. Conformidade com a LGPD</h4>
+                  <p>
+                    Em conformidade com a Lei Geral de Protecao de Dados (Lei 13.709/2018), voce tem direito a:
+                  </p>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>Acesso aos seus dados pessoais</li>
+                    <li>Correcao de dados incompletos ou desatualizados</li>
+                    <li>Eliminacao dos dados pessoais tratados com seu consentimento</li>
+                    <li>Revogacao do consentimento a qualquer momento</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">4. Seguranca</h4>
+                  <p>
+                    Utilizamos criptografia em transito (HTTPS) e acesso restrito aos dados. Suas fotos nunca sao 
+                    armazenadas em formato de texto puro (base64) no banco de dados.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-text-primary mb-1">5. Contato</h4>
+                  <p>
+                    Para exercer seus direitos ou esclarecer duvidas, entre em contato: suporte@facemax.com.br
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-border">
+            <button
+              onClick={() => setShowTermsModal(false)}
+              className="w-full py-2.5 rounded-xl bg-brand-accent text-background font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

@@ -55,7 +55,7 @@ export default function PhotoGuidePage() {
           <FadeIn>
             <div className="flex items-center gap-3 mb-2">
               <Camera className="w-5 h-5 text-brand-accent" />
-              <h1 className="text-lg font-bold tracking-tight text-text-primary">Guia de Fotos</h1>
+              <h1 className="text-lg font-bold tracking-tight text-text-primary font-alpino">Guia de Fotos</h1>
             </div>
             <p className="text-text-secondary text-sm mb-8 max-w-xl">
               Siga estas instruções para garantir que o especialista consiga avaliar sua face com precisão clínica.

@@ -70,7 +70,7 @@ export default function ProfilePage() {
     setGender(profile.gender || '');
     setAge(profile.age?.toString() || '');
     setStyleObjective(profile.style_objective || '');
-    setProfilePicture(profile.profile_picture || null);
+    setProfilePicture(profile.avatar_url || null);
   }, [profile]);
 
   function handleStartEdit() {
@@ -89,7 +89,7 @@ export default function ProfilePage() {
       setGender(profile.gender || '');
       setAge(profile.age?.toString() || '');
       setStyleObjective(profile.style_objective || '');
-      setProfilePicture(profile.profile_picture || null);
+      setProfilePicture(profile.avatar_url || null);
     }
   }
 
@@ -147,7 +147,7 @@ export default function ProfilePage() {
           gender: gender || null,
           age: age ? Number(age) : null,
           style_objective: styleObjective || null,
-          profile_picture: pictureUrl || null,
+          avatar_url: pictureUrl || null,
           last_profile_edit_at: new Date().toISOString(),
         });
 
@@ -181,7 +181,7 @@ export default function ProfilePage() {
       <div className="max-w-4xl mx-auto">
         <FadeIn>
           <div className="flex items-center justify-between mb-6 sm:mb-8">
-            <h1 className="text-lg font-bold tracking-tight text-text-primary">Meu Perfil</h1>
+            <h1 className="text-lg font-bold tracking-tight text-text-primary font-alpino">Meu Perfil</h1>
             {!editing && (
               canEdit ? (
                 <Button
@@ -246,7 +246,7 @@ export default function ProfilePage() {
                     <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
                       <div className="relative group">
                         <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-card-bg ring-2 ring-brand-accent/30">
-                          <AvatarImage src={editing ? profilePicture : (profile.profile_picture || profilePicture)} alt={fullName || 'Perfil'} />
+                          <AvatarImage src={editing ? profilePicture : (profile.avatar_url || profilePicture)} alt={fullName || 'Perfil'} />
                           <AvatarFallback className="bg-brand-secondary text-brand-accent">
                             <User className="w-8 h-8 sm:w-10 sm:h-10" />
                           </AvatarFallback>
@@ -295,7 +295,7 @@ export default function ProfilePage() {
             <FadeIn delay={0.2}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Dados Pessoais</CardTitle>
+                  <CardTitle className="text-base font-alpino">Dados Pessoais</CardTitle>
                   <CardDescription>Informacoes basicas do seu perfil</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -364,7 +364,7 @@ export default function ProfilePage() {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-brand-accent" />
-                    <CardTitle className="text-base">Objetivo de Estilo</CardTitle>
+                    <CardTitle className="text-base font-alpino">Objetivo de Estilo</CardTitle>
                   </div>
                   <CardDescription>Selecione o seu principal objetivo</CardDescription>
                 </CardHeader>

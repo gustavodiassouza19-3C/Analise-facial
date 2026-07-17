@@ -34,7 +34,7 @@ export default function ReportsPage() {
           <FadeIn>
             <div className="flex items-center gap-3 mb-2">
               <FileText className="w-5 h-5 text-brand-accent" />
-              <h1 className="text-lg font-bold tracking-tight text-text-primary">Meus Relatórios</h1>
+              <h1 className="text-lg font-bold tracking-tight text-text-primary font-alpino">Meus Relatórios</h1>
             </div>
             <p className="text-text-secondary text-sm mb-8 max-w-xl">
               Visualize todas as suas análises de visagismo diretamente na plataforma. Clique em qualquer relatório para ver os detalhes completos.
