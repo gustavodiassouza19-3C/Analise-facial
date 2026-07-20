@@ -12,10 +12,10 @@ import { FadeIn, ScaleIn, StaggerContainer, StaggerItem } from '@/components/ui/
 const BUCKET = 'analysis-photos';
 const CATEGORY_OPTIONS = ['Excelente', 'Bom', 'Regular', 'Ajustável'];
 const REPORT_CATEGORIES = [
-  { value: 'conteudo_inadequado', label: 'Conteudo Inadequado' },
-  { value: 'identidade_falsa', label: 'Identidade Falsa' },
-  { value: 'menor_de_idade', label: 'Menor de Idade' },
-  { value: 'spam', label: 'Spam' },
+  { value: 'avaliacao_incorreta', label: 'Avaliacao Incorreta' },
+  { value: 'resultado_inadequado', label: 'Resultado Inadequado' },
+  { value: 'informacoes_erradas', label: 'Informacoes Erradas' },
+  { value: 'comportamento_inapropriado', label: 'Comportamento Inapropriado' },
   { value: 'outro', label: 'Outro' },
 ];
 
@@ -249,24 +249,24 @@ export default function ProfessionalEvaluatePage() {
     try {
       const supabase = createClient();
       const { error: reportError } = await supabase
-        .from('user_reports')
+        .from('evaluation_reports')
         .insert({
-          reported_user_id: analysis.user_id,
-          reporter_id: user.id,
           analysis_id: id,
+          reporter_id: user.id,
+          reported_user_id: analysis.user_id,
           category: reportCategory,
           reason: reportReason.trim(),
         });
 
       if (reportError) throw reportError;
 
-      toast.success('Denuncia enviada com sucesso!', {
-        description: 'A equipe administrativa ira analisar seu relatorio.',
+      toast.success('Avaliacao denunciada com sucesso!', {
+        description: 'O cliente sera informado sobre a denuncia. A equipe administrativa ira analisar.',
       });
 
       setShowReportModal(false);
       setReportReason('');
-      setReportCategory('outro');
+      setReportCategory('avaliacao_incorreta');
     } catch (err) {
       toast.error('Erro ao enviar denuncia. Tente novamente.');
       console.error(err);
@@ -689,7 +689,7 @@ export default function ProfessionalEvaluatePage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Flag className="w-5 h-5 text-yellow-400" />
-                <h2 className="text-base font-bold text-white">Denunciar Usuario</h2>
+                <h2 className="text-base font-bold text-white">Denunciar Avaliacao</h2>
               </div>
               <button
                 onClick={() => setShowReportModal(false)}
@@ -700,7 +700,7 @@ export default function ProfessionalEvaluatePage() {
             </div>
 
             <p className="text-xs text-text-muted">
-              Denuncie o usuario <span className="font-semibold text-white">{analysis?.profiles?.full_name || 'desconhecido'}</span> por um dos motivos abaixo.
+              Denuncie esta avaliacao por um dos motivos abaixo. O cliente sera informado sobre a denuncia.
             </p>
 
             {/* Category */}

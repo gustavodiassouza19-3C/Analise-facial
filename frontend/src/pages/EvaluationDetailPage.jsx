@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { ArrowLeft, Loader2, User } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Flag, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import ChartRadialText from '@/components/evaluation/ChartRadialText';
 import RadarAttributes from '@/components/evaluation/RadarAttributes';
 import FacialThirds from '@/components/evaluation/FacialThirds';
@@ -11,6 +11,20 @@ import BodyRadarChart from '@/components/evaluation/BodyRadarChart';
 import { FadeIn, ScaleIn, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 
 const BUCKET = 'analysis-photos';
+
+const REPORT_STATUS_LABELS = {
+  pending: 'Em analise',
+  reviewed: 'Revisado',
+  dismissed: 'Descartado',
+  resolved: 'Resolvido',
+};
+
+const REPORT_STATUS_COLORS = {
+  pending: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  reviewed: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+  dismissed: 'text-text-muted bg-white/5 border-border',
+  resolved: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+};
 
 function getPhotoUrl(urlOrPath) {
   if (!urlOrPath) return null;
@@ -26,11 +40,13 @@ export default function EvaluationDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [entry, setEntry] = useState(null);
+  const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !id) return;
     fetchEntry();
+    fetchReport();
   }, [id, user]);
 
   const fetchEntry = async () => {
@@ -68,6 +84,28 @@ export default function EvaluationDetailPage() {
       setEntry(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReport = async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('evaluation_reports')
+        .select('*')
+        .eq('analysis_id', id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Failed to fetch report:', error);
+        return;
+      }
+
+      setReport(data);
+    } catch (err) {
+      console.error('Failed to fetch report:', err);
     }
   };
 
@@ -130,6 +168,33 @@ export default function EvaluationDetailPage() {
               </h1>
             </div>
           </FadeIn>
+
+          {/* Report Alert */}
+          {report && (
+            <FadeIn delay={0.1}>
+              <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${REPORT_STATUS_COLORS[report.status] || REPORT_STATUS_COLORS.pending}`}>
+                <Flag className="w-5 h-5 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-semibold">Avaliacao Denunciada</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${REPORT_STATUS_COLORS[report.status]}`}>
+                      {REPORT_STATUS_LABELS[report.status] || report.status}
+                    </span>
+                  </div>
+                  <p className="text-xs opacity-80 mb-2">{report.reason}</p>
+                  {report.admin_response && (
+                    <div className="mt-2 p-2 rounded-lg bg-white/5">
+                      <p className="text-[10px] text-text-muted mb-1">Resposta da administracao:</p>
+                      <p className="text-xs">{report.admin_response}</p>
+                    </div>
+                  )}
+                  <p className="text-[10px] opacity-60 mt-2">
+                    Denunciado em {new Date(report.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            </FadeIn>
+          )}
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left column */}

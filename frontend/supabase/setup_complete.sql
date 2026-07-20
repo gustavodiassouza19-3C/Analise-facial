@@ -41,10 +41,15 @@ CREATE POLICY "Users can read their own profile"
   ON public.profiles FOR SELECT TO authenticated
   USING ( (select auth.uid()) = id );
 
-CREATE POLICY "Users can update their own profile"
+-- FIX: Mass Assignment - impede alteracao de role e plan por usuarios comuns
+CREATE POLICY "Users can update their own profile (protected fields)"
   ON public.profiles FOR UPDATE TO authenticated
   USING ( (select auth.uid()) = id )
-  WITH CHECK ( (select auth.uid()) = id );
+  WITH CHECK (
+    (select auth.uid()) = id
+    AND role = (SELECT role FROM public.profiles WHERE id = (select auth.uid()))
+    AND plan = (SELECT plan FROM public.profiles WHERE id = (select auth.uid()))
+  );
 
 CREATE POLICY "Users can insert their own profile"
   ON public.profiles FOR INSERT TO authenticated
