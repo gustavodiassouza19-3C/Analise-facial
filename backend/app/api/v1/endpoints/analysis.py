@@ -3,7 +3,7 @@ Geometry Analysis endpoint — coordinate-based facial metrics.
 """
 
 import logging
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from app.schemas.analysis import (
@@ -37,7 +37,7 @@ def get_geometry_service() -> GeometryService:
 )
 @limiter.limit(settings.RATE_LIMIT_GENERAL)
 async def calculate_metrics(
-    request,
+    request: Request,
     data: GeometryAnalysisInputSchema,
     current_user: User = Depends(get_current_user),
     geometry_service: GeometryService = Depends(get_geometry_service),
@@ -95,7 +95,7 @@ async def calculate_metrics(
 )
 @limiter.limit(settings.RATE_LIMIT_GENERAL)
 async def detect_face(
-    request,
+    request: Request,
     data: FaceDetectSchema,
     current_user: User = Depends(get_current_user),
 ) -> FaceDetectResponse:

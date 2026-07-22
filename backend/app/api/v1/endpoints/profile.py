@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +17,7 @@ ALLOWED_UPDATE_FIELDS = {"full_name", "profile_picture", "gender", "age", "style
 
 @router.get("/", response_model=UserProfileResponse)
 @limiter.limit(settings.RATE_LIMIT_GENERAL)
-async def get_profile(request, current_user: User = Depends(get_current_user)):
+async def get_profile(request: Request, current_user: User = Depends(get_current_user)):
     """Get current user's profile. Only returns own profile (IDOR safe)."""
     return current_user
 
@@ -25,7 +25,7 @@ async def get_profile(request, current_user: User = Depends(get_current_user)):
 @router.put("/", response_model=UserProfileResponse)
 @limiter.limit(settings.RATE_LIMIT_GENERAL)
 async def update_profile(
-    request,
+    request: Request,
     data: UserProfileUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

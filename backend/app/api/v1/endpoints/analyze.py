@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +17,7 @@ limiter = Limiter(key_func=get_remote_address)
 @router.post("/", response_model=AnalysisResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit(settings.RATE_LIMIT_ANALYSIS)
 async def analyze_face(
-    request,
+    request: Request,
     data: AnalysisCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -30,7 +30,7 @@ async def analyze_face(
 @router.get("/history", response_model=list[AnalysisResponse])
 @limiter.limit(settings.RATE_LIMIT_GENERAL)
 async def get_analysis_history(
-    request,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -42,7 +42,7 @@ async def get_analysis_history(
 @router.get("/pending", response_model=list[AnalysisPendingResponse])
 @limiter.limit(settings.RATE_LIMIT_GENERAL)
 async def get_pending_analyses(
-    request,
+    request: Request,
     current_user: User = Depends(require_role(["professional", "admin"])),
     db: AsyncSession = Depends(get_db),
 ):

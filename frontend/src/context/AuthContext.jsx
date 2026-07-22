@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, role, plan, status, avatar_url')
         .eq('id', userId)
         .single();
 
@@ -23,7 +23,6 @@ export function AuthProvider({ children }) {
         setProfile(null);
         return;
       }
-      console.log('[AuthContext] Profile loaded:', data);
       setProfile(data);
     } catch (err) {
       console.error('Profile fetch error:', err);
@@ -109,8 +108,6 @@ export function AuthProvider({ children }) {
     setProfile(null);
     setToken(null);
   }, [supabase]);
-
-  console.log('[AuthContext] profile state:', profile);
 
   const mergedUser = user && profile
     ? {

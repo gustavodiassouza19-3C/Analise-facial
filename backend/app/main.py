@@ -1,9 +1,10 @@
 import logging
+import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
@@ -15,6 +16,23 @@ logger = logging.getLogger(__name__)
 
 # Rate limiter — keyed by client IP
 limiter = Limiter(key_func=get_remote_address)
+
+
+def _rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    retry_after = getattr(exc, "retry_after", None) or 60
+    reset_at = int(time.time()) + retry_after
+    detail = (
+        f"Limite de requisicoes atingido. "
+        f"Tente novamente em {retry_after} segundos."
+    )
+    return JSONResponse(
+        status_code=429,
+        content={"detail": detail, "retry_after": retry_after, "reset_at": reset_at},
+        headers={
+            "Retry-After": str(retry_after),
+            "X-RateLimit-Reset": str(reset_at),
+        },
+    )
 
 
 @asynccontextmanager
@@ -37,6 +55,21 @@ def create_app() -> FastAPI:
     # Rate limiting
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # Add rate-limit info headers to every successful response
+    @app.middleware("http")
+    async def add_rate_limit_headers(request: Request, call_next):
+        response = await call_next(request)
+        # Attach configured limits as hints so the frontend can display them
+        path = request.url.path
+        if "/analyze" in path:
+            limit_label = settings.RATE_LIMIT_ANALYSIS
+        elif "/auth" in path:
+            limit_label = settings.RATE_LIMIT_AUTH
+        else:
+            limit_label = settings.RATE_LIMIT_GENERAL
+        response.headers["X-RateLimit-Limit"] = limit_label
+        return response
 
     # CORS — restricted methods and headers in production
     if settings.BACKEND_CORS_ORIGINS:

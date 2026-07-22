@@ -1,12 +1,30 @@
 export const API_BASE = import.meta.env.DEV ? '/api/v1' : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
 
 /**
- * Envia 1 foto frontal para análise via DeepSeek.
+ * Trata erros de resposta da API, incluindo rate limiting (429).
+ * Lanca Error com mensagem amigavel ao usuario.
+ */
+async function handleApiError(response) {
+  const body = await response.json().catch(() => ({}));
+
+  if (response.status === 429) {
+    const retryAfter = body.retry_after || 60;
+    const minutes = Math.ceil(retryAfter / 60);
+    throw new Error(
+      `Limite de requisicoes atingido. Tente novamente em ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}.`
+    );
+  }
+
+  throw new Error(body.detail || 'Erro na requisicao');
+}
+
+/**
+ * Envia 1 foto frontal para analise via IA.
  * POST /api/v1/analyze/
  *
  * @param {string} photoFront - Base64 da foto frontal
- * @param {string} token      - JWT de autenticação
- * @returns {Promise<Object>} - Resultado da análise
+ * @param {string} token      - JWT de autenticacao
+ * @returns {Promise<Object>} - Resultado da analise
  */
 export async function analyzeWithAI(photoFront, token) {
   const response = await fetch(`${API_BASE}/analyze/`, {
@@ -21,8 +39,7 @@ export async function analyzeWithAI(photoFront, token) {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || 'Erro ao analisar rosto');
+    await handleApiError(response);
   }
 
   return response.json();
@@ -43,8 +60,7 @@ export async function detectFace(base64Image) {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || 'Erro ao detectar rosto');
+    await handleApiError(response);
   }
 
   const data = await response.json();
